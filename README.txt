@@ -1,5 +1,6 @@
 RABBITMQ
 "C:\Program Files\RabbitMQ Server\rabbitmq_server-3.6.0\sbin\rabbitmq-server" start
+"C:\Program Files\RabbitMQ Server\rabbitmq_server-3.6.1\sbin\rabbitmq-server" start
 Management Server URL http://localhost:15672/
 
 MONGO

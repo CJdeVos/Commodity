@@ -41,10 +41,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IAggregateEvent.cs" />
+    <Compile Include="IAggregateRoot.cs" />
+    <Compile Include="IAggregateRootId.cs" />
     <Compile Include="ICommand.cs" />
     <Compile Include="ICommandDispatcher.cs" />
     <Compile Include="ICommandHandler.cs" />
-    <Compile Include="IEventHandler.cs" />
     <Compile Include="IEventPublisher.cs" />
     <Compile Include="IEventStorage.cs" />
     <Compile Include="IEventStore.cs" />

@@ -47,9 +47,12 @@
     <Compile Include="AggregateRoot.cs" />
     <Compile Include="AggregateRootId.cs" />
     <Compile Include="DomainCoreStartupAsServer.cs" />
+    <Compile Include="EventContext.cs" />
     <Compile Include="EventPublisher.cs" />
+    <Compile Include="Events\Created.cs" />
     <Compile Include="InMemoryEventStorage.cs" />
     <Compile Include="EventStore.cs" />
+    <Compile Include="Interfaces\IEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

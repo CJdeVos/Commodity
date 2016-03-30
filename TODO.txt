@@ -1,5 +1,7 @@
 - Envelop for events
 - Generic Create and Delete events
+? Remove IAggregateRootId
+? Remove IAggregateRoot (keep AggregateRoot) and remove complexity involved with this interface
 
 
 FURTHER DOWN

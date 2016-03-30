@@ -3,6 +3,7 @@ using Ninject;
 using System;
 using Commodity.Common;
 using System.Linq;
+using Commodity.Domain.Core.Interfaces;
 
 namespace Commodity.Domain.Core
 {

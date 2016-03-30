@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Commodity.Domain.Core.Interfaces;
 using Commodity.Interfaces;
 using Ninject;
 
@@ -30,13 +31,16 @@ namespace Commodity.Domain.Core
 
         public void Publish(IAggregateRootId aggregateRootId, IEnumerable<IAggregateEvent> events)
         {
+            Type eventContextType = typeof(EventContext<>);
             foreach (var e in events)
             {
                 Type eventHandlerType = typeof(IEventHandler<>);
-                Type genericEventHandlerType = eventHandlerType.MakeGenericType(e.GetType());
+                Type eventContextForEventType = eventContextType.MakeGenericType(e.GetType());
+                Type genericEventHandlerType = eventHandlerType.MakeGenericType(eventContextForEventType);
                 var g = _kernel.GetAll(genericEventHandlerType);
                 foreach (dynamic d in g)
                 {
+                    eventContextForEventType.GetConstructor()
                     d.Handle(aggregateRootId, (dynamic)e);
                 }
             }

@@ -4,12 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Commodity.Domain.Core;
+using Commodity.Domain.Core.Events;
+using Commodity.Domain.Core.Interfaces;
+using Commodity.Domain.Schemas;
 using Commodity.Domain.Schemas.Events;
 
 namespace Commodity.ProjectionBuilders
 {
     public class SchemaNameAndCountOfProperties : IProjectionBuilder,
-            IEventHandler<SchemaCreated>,
+            IEventHandler<Created<Schema>>,
             IEventHandler<SchemaPropertyDeleted>,
             IEventHandler<SchemaPropertyCreated>
     {
@@ -19,20 +23,26 @@ namespace Commodity.ProjectionBuilders
 
         private static Dictionary<IAggregateRootId, int> results = new Dictionary<IAggregateRootId, int>();
 
-        public void Handle(IAggregateRootId aggregateId, SchemaCreated @event)
+
+        public void Handle(EventContext<Created<Schema>> context)
         {
-            EnsureSchemaId(aggregateId);
+            EnsureSchemaId(context.AggregateRootId);
+        }
+
+        public void Handle(EventContext<SchemaCreated> context)
+        {
+            EnsureSchemaId(context.AggregateRootId);
         }
 
 
-        public void Handle(IAggregateRootId aggregateId, SchemaPropertyCreated @event)
+        public void Handle(EventContext<SchemaPropertyCreated> context)
         {
-            results[aggregateId] += 1;
+            results[context.AggregateRootId] += 1;
         }
 
-        public void Handle(IAggregateRootId aggregateId, SchemaPropertyDeleted @event)
+        public void Handle(EventContext<SchemaPropertyDeleted> context)
         {
-            results[aggregateId] -= 1;
+            results[context.AggregateRootId] -= 1;
         }
 
 
