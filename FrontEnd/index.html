@@ -1,0 +1,23 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <script src="Scripts/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript">
+
+
+        function postToServer() {
+            $.post("/api/schema", {
+                name: "1828",
+                properties: ["X", "Y", "Z"]
+            });
+
+        }
+    </script>
+</head>
+<body>
+<h1>Start</h1>
+    <a onclick="postToServer(); return false;">Post stamp</a>
+</body>
+</html>
