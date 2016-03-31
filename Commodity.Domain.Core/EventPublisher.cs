@@ -31,17 +31,17 @@ namespace Commodity.Domain.Core
 
         public void Publish(IAggregateRootId aggregateRootId, IEnumerable<IAggregateEvent> events)
         {
-            Type eventContextType = typeof(EventContext<>);
             foreach (var e in events)
             {
+                EventContext context = new EventContext(aggregateRootId, e);
+                var genericContext = context.ToGenericEventContext();
+
                 Type eventHandlerType = typeof(IEventHandler<>);
-                Type eventContextForEventType = eventContextType.MakeGenericType(e.GetType());
-                Type genericEventHandlerType = eventHandlerType.MakeGenericType(eventContextForEventType);
+                Type genericEventHandlerType = eventHandlerType.MakeGenericType(e.GetType());
                 var g = _kernel.GetAll(genericEventHandlerType);
                 foreach (dynamic d in g)
                 {
-                    eventContextForEventType.GetConstructor()
-                    d.Handle(aggregateRootId, (dynamic)e);
+                    d.Handle((dynamic)genericContext);
                 }
             }
         }
