@@ -2,7 +2,7 @@
 
 namespace Commodity.Domain.Core.Events
 {
-    public class Created<TAggregate> : IAggregateEvent
+    public class Deleted<TAggregate> : IAggregateEvent
         where TAggregate: Aggregate
     {
     }

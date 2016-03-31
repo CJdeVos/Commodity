@@ -7,22 +7,22 @@ namespace Commodity.Domain.Core
     public class InMemoryEventStorage : IEventStorage
     {
 
-        public IEnumerable<IAggregateEvent> GetEventStream(IAggregateRootId aggregateRootId)
+        public IEnumerable<IAggregateEvent> GetEventStream(Guid aggregateRootId)
         {
-            return _storage.ContainsKey(aggregateRootId.TechnicalId)
-                ? _storage[aggregateRootId.TechnicalId].AsReadOnly()
+            return _storage.ContainsKey(aggregateRootId)
+                ? _storage[aggregateRootId].AsReadOnly()
                 : null;
         }
 
         private readonly Dictionary<Guid, List<IAggregateEvent>> _storage = new Dictionary<Guid, List<IAggregateEvent>>();
-        public void Persist(IAggregateRootId aggregateRootId, IEnumerable<IAggregateEvent> events)
+        public void Persist(Guid aggregateRootId, IEnumerable<IAggregateEvent> events)
         {
             if(aggregateRootId==null)
                 throw new ArgumentNullException("aggregateRootId");
 
-            if(!_storage.ContainsKey(aggregateRootId.TechnicalId))
-                _storage.Add(aggregateRootId.TechnicalId, new List<IAggregateEvent>());
-            _storage[aggregateRootId.TechnicalId].AddRange(events);
+            if(!_storage.ContainsKey(aggregateRootId))
+                _storage.Add(aggregateRootId, new List<IAggregateEvent>());
+            _storage[aggregateRootId].AddRange(events);
         }
     }
 }

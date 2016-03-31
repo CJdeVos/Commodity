@@ -9,6 +9,7 @@ using Commodity.Common;
 using Commodity.Domain;
 using Commodity.Domain.Core;
 using Commodity.Domain.Schemas;
+using Commodity.Domain.Schemas.Events;
 using Commodity.Interfaces;
 using Ninject;
 using Commodity.ProjectionBuilders;
@@ -23,7 +24,7 @@ namespace Commodity.Server
             Commodity.Domain.Core.DomainCoreStartupAsServer dc = new DomainCoreStartupAsServer(null);
             Commodity.CommandHandlers.Schemas.CreateSchemaCommandHandler ch = new CreateSchemaCommandHandler(null);
             SchemaNameAndCountOfProperties sncop = new SchemaNameAndCountOfProperties();
-            Schema schema = new Schema(null);
+            SchemaRenamed schemaRn = new SchemaRenamed();
 
 
 

@@ -7,13 +7,13 @@ namespace Commodity.Domain.Core
 {
     public class EventContext
     {
-        public EventContext(IAggregateRootId aggregateRootId, IAggregateEvent @event)
+        public EventContext(Guid aggregateId, IAggregateEvent @event)
         {
-            this.AggregateRootId = aggregateRootId;
+            this.AggregateId = aggregateId;
             this.Event = @event;
         }
 
-        public IAggregateRootId AggregateRootId { get; private set; }
+        public Guid AggregateId { get; private set; }
         public IAggregateEvent Event { get; private set; }
 
         internal object ToGenericEventContext()
@@ -35,7 +35,7 @@ namespace Commodity.Domain.Core
         where TEvent : class, IAggregateEvent
     {
         internal EventContext(EventContext context) 
-            : base(context.AggregateRootId, context.Event){
+            : base(context.AggregateId, context.Event){
         }
 
         public new TEvent Event {

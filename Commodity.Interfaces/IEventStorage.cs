@@ -5,8 +5,8 @@ namespace Commodity.Interfaces
 {
     public interface IEventStorage
     {
-        IEnumerable<IAggregateEvent> GetEventStream(IAggregateRootId aggregateRootId);
+        IEnumerable<IAggregateEvent> GetEventStream(Guid aggregateRootId);
 
-        void Persist(IAggregateRootId aggregateRootId, IEnumerable<IAggregateEvent> events);
+        void Persist(Guid aggregateRootId, IEnumerable<IAggregateEvent> events);
     }
 }

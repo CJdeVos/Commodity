@@ -21,32 +21,26 @@ namespace Commodity.ProjectionBuilders
         {
         }
 
-        private static Dictionary<IAggregateRootId, int> results = new Dictionary<IAggregateRootId, int>();
+        private static Dictionary<Guid, int> results = new Dictionary<Guid, int>();
 
 
         public void Handle(EventContext<Created<Schema>> context)
         {
-            EnsureSchemaId(context.AggregateRootId);
+            EnsureSchemaId(context.AggregateId);
         }
-
-        public void Handle(EventContext<SchemaCreated> context)
-        {
-            EnsureSchemaId(context.AggregateRootId);
-        }
-
 
         public void Handle(EventContext<SchemaPropertyCreated> context)
         {
-            results[context.AggregateRootId] += 1;
+            results[context.AggregateId] += 1;
         }
 
         public void Handle(EventContext<SchemaPropertyDeleted> context)
         {
-            results[context.AggregateRootId] -= 1;
+            results[context.AggregateId] -= 1;
         }
 
 
-        private void EnsureSchemaId(IAggregateRootId aggregateId)
+        private void EnsureSchemaId(Guid aggregateId)
         {
             if (!results.ContainsKey(aggregateId))
                 results.Add(aggregateId, 0);

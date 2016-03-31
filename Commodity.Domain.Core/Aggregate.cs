@@ -1,22 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Reflection;
+using Commodity.Domain.Core.Events;
 using Commodity.Interfaces;
 
 namespace Commodity.Domain.Core
 {
-    public abstract class AggregateRoot : IAggregateRoot
+    public abstract class Aggregate
     {
-        protected AggregateRoot()
+        protected Aggregate()
         {
         }
 
-        protected AggregateRoot(IAggregateRootId id)
+        private void PublishTypedEvent(Type t)
         {
-            Id = id;
+            var type = t.MakeGenericType(this.GetType());
+            object instance = type.GetConstructor(new Type[0]).Invoke(new object[0]);
+            this.Publish((dynamic)instance);
         }
 
-        public IAggregateRootId Id { get; internal set; }
+        protected Aggregate(Guid aggregateId)
+        {
+            AggregateId = aggregateId;
+            PublishTypedEvent(typeof(Created<>));
+        }
+
+        public void Delete()
+        {
+            PublishTypedEvent(typeof (Deleted<>));
+        }
+
+        public Guid AggregateId { get; internal set; }
 
         /* play state */
         private bool _playState;

@@ -1,5 +1,6 @@
 ﻿using System;
 using Commodity.Commands.Schemas;
+using Commodity.Domain.Core.Interfaces;
 using Commodity.Interfaces;
 using Commodity.Domain.Schemas;
 

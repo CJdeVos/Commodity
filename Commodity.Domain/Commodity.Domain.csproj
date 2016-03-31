@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Schemas\Events\SchemaCreated.cs" />
     <Compile Include="Schemas\Events\SchemaPropertyCreated.cs" />
     <Compile Include="Schemas\Events\SchemaPropertyDeleted.cs" />
     <Compile Include="Schemas\Events\SchemaRenamed.cs" />

@@ -1,15 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Commodity.Domain.Core;
 using Commodity.Domain.Schemas.Events;
+using Commodity.Domain.Core.Events;
 
 namespace Commodity.Domain.Schemas
 {
-    public class Schema : AggregateRoot
+    public class Schema : Aggregate
     {
         public Schema() { }
-        public Schema(AggregateRootId<Schema> schemaId) : base(schemaId)
+        public Schema(Guid schemaId) : base(schemaId)
         {
-            //Publish(new SchemaCreated());
         }
 
         public string Name { get; private set; }
@@ -32,7 +33,7 @@ namespace Commodity.Domain.Schemas
             Publish(new SchemaPropertyDeleted() { PropertyName = schemaName });
         }
 
-        private void Handle(SchemaCreated @event)
+        private void Handle(Created<Schema> @event)
         {
         }
 

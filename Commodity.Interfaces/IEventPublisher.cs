@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Commodity.Interfaces
 {
     public interface IEventPublisher
     {
-        void Publish(IAggregateRootId aggregateRootId, IEnumerable<IAggregateEvent> events);
+        void Publish(Guid aggregateRootId, IEnumerable<IAggregateEvent> events);
     }
 }

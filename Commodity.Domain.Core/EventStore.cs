@@ -1,6 +1,7 @@
 ﻿using System;
 using Commodity.Interfaces;
 using System.Linq;
+using Commodity.Domain.Core.Interfaces;
 
 namespace Commodity.Domain.Core
 {
@@ -14,31 +15,28 @@ namespace Commodity.Domain.Core
             _eventPublisher = eventPublisher;
         }
 
-        private TAggregateRoot CreateNewAggregateRoot<TAggregateRoot>(AggregateRootId<TAggregateRoot> id)
-            where TAggregateRoot : IAggregateRoot
+        private TAggregate CreateNewAggregate<TAggregate>(Guid id)
+            where TAggregate : Aggregate
         {
-            var constructorInfo = typeof(TAggregateRoot).GetConstructor(new[] { typeof(AggregateRootId<TAggregateRoot>) });
+            var constructorInfo = typeof(TAggregate).GetConstructor(new[] { typeof(Guid) });
             if (constructorInfo == null)
-                throw new Exception("Constructor of aggregate root to pass id not found.");
+                throw new Exception("Constructor of aggregate root to pass Guid id not found.");
 
-            TAggregateRoot aggregateRoot = (TAggregateRoot)constructorInfo.Invoke(new[] { id });
+            TAggregate aggregateRoot = (TAggregate)constructorInfo.Invoke(new[] { (object)id });
             return aggregateRoot;
         }
 
-        public TAggregateRoot Load<TAggregateRoot>(IAggregateRootId aggregateRootId) 
-            where TAggregateRoot : IAggregateRoot
+        public TAggregate Load<TAggregate>(Guid aggregateRootId) 
+            where TAggregate : Aggregate
         {
-            if (aggregateRootId == null)
+            if (aggregateRootId == Guid.Empty)
                 throw new ArgumentNullException("aggregateRootId");
-            var castedAggregateRootId = aggregateRootId as AggregateRootId<TAggregateRoot>;
-            if(castedAggregateRootId == null)
-                throw new ArgumentException("Must have been an AggregateRootId<TAggregateRoot> object");
 
             var eventStream = _eventStorage.GetEventStream(aggregateRootId);
             if (eventStream == null)
-                return default(TAggregateRoot);
+                return default(TAggregate);
 
-            return CreateNewAggregateRoot(castedAggregateRootId);
+            return CreateNewAggregate<TAggregate>(aggregateRootId);
 
             // without playing?
             // play events?
@@ -47,33 +45,33 @@ namespace Commodity.Domain.Core
             //return aggregateRoot;
         }
 
-        public TAggregateRoot LoadNew<TAggregateRoot>() where TAggregateRoot : IAggregateRoot
+        public TAggregate LoadNew<TAggregate>() where TAggregate : Aggregate
         {
-            return CreateNewAggregateRoot(new AggregateRootId<TAggregateRoot>(Guid.NewGuid()));
+            return CreateNewAggregate<TAggregate>(Guid.NewGuid());
         }
 
-        public void Persist<TAggregateRoot>(TAggregateRoot aggregateRoot)
-            where TAggregateRoot : IAggregateRoot
+        public void Persist<TAggregate>(TAggregate aggregate)
+            where TAggregate : Aggregate
         {
-            if (aggregateRoot == null)
-                throw new ArgumentNullException("aggregateRoot");
+            if (aggregate == null)
+                throw new ArgumentNullException("aggregate");
 
-            AggregateRoot aggr = aggregateRoot as AggregateRoot;
-            if(aggr == null)
-                throw new Exception("Aggregate must derive from AggregateRoot");
+            //AggregateRoot aggr = aggregateRoot as AggregateRoot;
+            //if(aggr == null)
+            //    throw new Exception("Aggregate must derive from AggregateRoot");
 
             // test for uncommitted save unsaved changes
-            var uncommittedEvents = aggr.GetUncommittedEvents().ToArray();
+            var uncommittedEvents = aggregate.GetUncommittedEvents().ToArray();
             if (uncommittedEvents.Any() == false)
                 return;
 
-            _eventStorage.Persist(aggregateRoot.Id, uncommittedEvents);
+            _eventStorage.Persist(aggregate.AggregateId, uncommittedEvents);
 
             // publish events
-            _eventPublisher.Publish(aggregateRoot.Id, uncommittedEvents);
+            _eventPublisher.Publish(aggregate.AggregateId, uncommittedEvents);
 
             // commit actual aggregate
-            aggr.Commit();
+            aggregate.Commit();
             //throw new NotImplementedException();
         }
     }

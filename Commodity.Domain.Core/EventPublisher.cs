@@ -29,7 +29,7 @@ namespace Commodity.Domain.Core
         //    }
         //}
 
-        public void Publish(IAggregateRootId aggregateRootId, IEnumerable<IAggregateEvent> events)
+        public void Publish(Guid aggregateRootId, IEnumerable<IAggregateEvent> events)
         {
             foreach (var e in events)
             {
