@@ -56,10 +56,6 @@ namespace Commodity.Domain.Core
             if (aggregate == null)
                 throw new ArgumentNullException("aggregate");
 
-            //AggregateRoot aggr = aggregateRoot as AggregateRoot;
-            //if(aggr == null)
-            //    throw new Exception("Aggregate must derive from AggregateRoot");
-
             // test for uncommitted save unsaved changes
             var uncommittedEvents = aggregate.GetUncommittedEvents().ToArray();
             if (uncommittedEvents.Any() == false)
@@ -72,7 +68,6 @@ namespace Commodity.Domain.Core
 
             // commit actual aggregate
             aggregate.Commit();
-            //throw new NotImplementedException();
         }
     }
 }

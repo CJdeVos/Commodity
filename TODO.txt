@@ -1,4 +1,7 @@
-
+- Separate Repository Functionality from IEventStore (e.g. create IAggregateRepository: it's implementation can also use snapshots to quickly (re)build an aggregate)
+- Include version number in events
+- Query and Persist events ((1)from version, (2) until version)
+- Create Snapshots
 
 FURTHER DOWN
 - 

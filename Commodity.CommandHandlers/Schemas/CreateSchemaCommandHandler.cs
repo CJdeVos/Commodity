@@ -6,21 +6,25 @@ using Commodity.Domain.Schemas;
 
 namespace Commodity.CommandHandlers.Schemas
 {
-    public class CreateSchemaCommandHandler : ICommandHandler<CreateSchemaCommand>
+    public class CreateSchemaCommandHandler : 
+        ICommandHandler<CreateSchemaCommand>
     {
-        private readonly IEventStore _eventStore;
-        public CreateSchemaCommandHandler(IEventStore eventStore)
+        private readonly IAggregateRepository _repository;
+        public CreateSchemaCommandHandler(IAggregateRepository repository)
         {
-            _eventStore = eventStore;
+            _repository = repository;
         }
 
         public void Handle(CreateSchemaCommand command)
         {
-            var schema = _eventStore.LoadNew<Schema>();
+            var schema = new Schema(Guid.NewGuid()); // = _repository.LoadNew<Schema>();
             schema.AddProperty("A");
             schema.AddProperty("BC");
-            _eventStore.Persist(schema);
+            _repository.Save(schema);
 
+
+            // query event store for events
+            _repository.Load<Schema>(Guid.NewGuid(), Int32.MaxValue);
 
         }
     }
