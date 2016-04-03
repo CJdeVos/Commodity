@@ -22,7 +22,7 @@ namespace Commodity.Domain.Schemas
 
         public void AddProperty(string propertyName)
         {
-            Publish(new SchemaPropertyCreated()
+            ApplyEvent(new SchemaPropertyCreated()
             {
                 PropertyName = propertyName
             });
@@ -30,7 +30,7 @@ namespace Commodity.Domain.Schemas
 
         public void DeleteProperty(string schemaName)
         {
-            Publish(new SchemaPropertyDeleted() { PropertyName = schemaName });
+            ApplyEvent(new SchemaPropertyDeleted() { PropertyName = schemaName });
         }
 
         private void Handle(Created<Schema> @event)

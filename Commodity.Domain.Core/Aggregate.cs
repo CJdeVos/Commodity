@@ -13,50 +13,35 @@ namespace Commodity.Domain.Core
         {
         }
 
-        private void PublishTypedEvent(Type t)
+        private void ApplyTypedEvent(Type t)
         {
             var type = t.MakeGenericType(this.GetType());
             object instance = type.GetConstructor(new Type[0]).Invoke(new object[0]);
-            this.Publish((dynamic)instance);
+            this.ApplyEvent((dynamic)instance);
         }
 
         protected Aggregate(Guid aggregateId)
         {
             AggregateId = aggregateId;
-            PublishTypedEvent(typeof(Created<>));
+            ApplyTypedEvent(typeof(Created<>));
         }
 
         public void Delete()
         {
-            PublishTypedEvent(typeof (Deleted<>));
+            ApplyTypedEvent(typeof (Deleted<>));
         }
 
         public Guid AggregateId { get; internal set; }
-
-        /* play state */
-        private bool _playState;
-        internal void StartPlayState()
-        {
-            _playState = true;
-        }
-        internal void EndPlayState()
-        {
-            _playState = false;
-        }
-
-        internal bool IsPlayState()
-        {
-            return _playState;
-        }
-        /* */
-        internal protected void Publish(IAggregateEvent @event)
+        public int CommittedVersion { get; internal set; }
+        
+        internal protected void ApplyEvent(IAggregateEvent @event)
         {
             var m = this.GetType().GetMethod("Handle", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.InvokeMethod, null, new[] { @event.GetType() }, null);
             if (m == null) throw new NotImplementedException(String.Format("Handle({0} @event) not implemented for type {1}.", @event.GetType().ToString(), this.GetType().ToString()));
             m.Invoke(this, new[] { @event });
 
-            if (!IsPlayState())
-                _uncommittedEvents.Add(@event);
+            //if (!IsPlayState())
+            _uncommittedEvents.Add(@event);
         }
 
         private readonly List<IAggregateEvent> _uncommittedEvents = new List<IAggregateEvent>();

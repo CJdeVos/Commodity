@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Commodity.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Commodity.Domain.Core.Interfaces
 {
     public interface IEventStore
     {
-        TAggregate Load<TAggregate>(Guid aggregateId) where TAggregate: Aggregate;
-        void Persist<TAggregate>(TAggregate aggregate) where TAggregate : Aggregate;
+        Task<EventStream> GetEventStream(string streamName, int startVersion, int? untilVersion);
+        void AppendToEventStream(string streamName, int expectedVersion, IEnumerable<IAggregateEvent> events);
     }
 }

@@ -21,7 +21,7 @@ namespace Commodity.Server
         static void Main(string[] args)
         {
             Commodity.Command.Core.CommandCoreStartupAsClient cc = new CommandCoreStartupAsClient(null);
-            Commodity.Domain.Core.DomainCoreStartupAsServer dc = new DomainCoreStartupAsServer(null);
+            Commodity.Domain.Core.StartupAsServer dc = new StartupAsServer(null);
             Commodity.CommandHandlers.Schemas.CreateSchemaCommandHandler ch = new CreateSchemaCommandHandler(null);
             SchemaNameAndCountOfProperties sncop = new SchemaNameAndCountOfProperties();
             SchemaRenamed schemaRn = new SchemaRenamed();

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Commodity.Domain.Core.Interfaces;
+using Commodity.Interfaces;
 
 namespace Commodity.Domain.Core
 {
@@ -7,28 +10,60 @@ namespace Commodity.Domain.Core
     {
         private readonly IEventStore _eventStore;
         private readonly IEventStreamNameResolver _eventStreamNameResolver;
-        public AggregateRepository(IEventStore eventStore, IEventStreamNameResolver eventStreamNameResolver)
+        private readonly IEventPublisher _eventPublisher;
+
+        public AggregateRepository(IEventStore eventStore, IEventStreamNameResolver eventStreamNameResolver, IEventPublisher eventPublisher)
         {
             _eventStore = eventStore;
             _eventStreamNameResolver = eventStreamNameResolver;
+            _eventPublisher = eventPublisher;
         }
 
-        public TAggregate Load<TAggregate>(Guid aggregateId, int version) where TAggregate : Aggregate
+        public async Task<TAggregate> Load<TAggregate>(Guid aggregateId, int version) where TAggregate : Aggregate
         {
-            // load snapshot
             string streamName = _eventStreamNameResolver.Resolve<TAggregate>(aggregateId);
             TAggregate aggregate = ConstructAggregate<TAggregate>(aggregateId);
 
-            var eventStream = _eventStore.GetEventStream(streamName, 0, version);
+            // load snapshot
+
+            // load stream and apply events
+            var eventStream = await _eventStore.GetEventStream(streamName, 0, version);
             foreach (var @event in eventStream)
             {
-                aggregate.ApplyEvent(@event);
+                aggregate.ApplyEvent(DeserializeEvent(@event));
             }
+            aggregate.Commit();
+
+            // return aggregate
+            return aggregate;
         }
 
         public void Save<TAggregate>(TAggregate aggregate) where TAggregate : Aggregate
         {
-            throw new NotImplementedException();
+            if (aggregate == null)
+                throw new ArgumentNullException("aggregate");
+
+            // test for uncommitted save unsaved changes
+            var uncommittedEvents = aggregate.GetUncommittedEvents().ToArray();
+            if (uncommittedEvents.Any() == false)
+                return;
+
+            string streamName = _eventStreamNameResolver.Resolve<TAggregate>(aggregate.AggregateId);
+
+            // append events to stream
+            _eventStore.AppendToEventStream(streamName, aggregate.CommittedVersion, uncommittedEvents);
+
+            // publish events
+            _eventPublisher.Publish(aggregate.AggregateId, uncommittedEvents);
+
+            // commit aggregate (e.g. reset)
+            aggregate.Commit();
+        }
+
+        private IAggregateEvent DeserializeEvent(EventData eventData)
+        {
+            // what is data?
+            return null;
         }
 
         private TAggregate ConstructAggregate<TAggregate>(Guid aggregateId)
