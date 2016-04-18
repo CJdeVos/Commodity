@@ -8,5 +8,7 @@ namespace Commodity.Domain.Core.Interfaces
     {
         Task<EventStream> GetEventStream(string streamName, int startVersion, int? untilVersion);
         void AppendToEventStream(string streamName, int expectedVersion, IEnumerable<IAggregateEvent> events);
+
+        string[] GetEventNamesUsedInStore();
     }
 }

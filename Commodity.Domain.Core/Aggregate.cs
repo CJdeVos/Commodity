@@ -52,7 +52,9 @@ namespace Commodity.Domain.Core
 
         internal void Commit()
         {
+            CommittedVersion += _uncommittedEvents.Count;
             _uncommittedEvents.Clear();
+            
         }
     }
 }

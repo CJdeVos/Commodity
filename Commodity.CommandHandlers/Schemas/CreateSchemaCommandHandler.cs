@@ -15,16 +15,21 @@ namespace Commodity.CommandHandlers.Schemas
             _repository = repository;
         }
 
-        public void Handle(CreateSchemaCommand command)
+        public async void Handle(CreateSchemaCommand command)
         {
-            var schema = new Schema(Guid.NewGuid()); // = _repository.LoadNew<Schema>();
+
+
+            Guid gSchemaId = new Guid("42E5B6A3-0B76-4FE7-B780-71935086B8ED");
+            var schema = new Schema(gSchemaId); // = _repository.LoadNew<Schema>();
             schema.AddProperty("A");
             schema.AddProperty("BC");
             _repository.Save(schema);
 
 
             // query event store for events
-            _repository.Load<Schema>(Guid.NewGuid(), Int32.MaxValue);
+            var storedSchema = await _repository.Load<Schema>(gSchemaId, Int32.MaxValue);
+            storedSchema.AddProperty("CD");
+            _repository.Save(storedSchema);
 
         }
     }

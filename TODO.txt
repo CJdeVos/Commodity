@@ -1,7 +1,9 @@
 NOW
-- Create BSON Document with streamName as _id
 - Ensure the event is pushed
-- Serialize and Deserialize events
+- Serialize and Deserialize events (to JSON)
+  = Shorthand naming for deserialization (e.g. unique event name)
+  = Ensuring all events are also available for deserialization (store list of events, verify existence on startup)
+
 
 
 FURTHER DOWN

@@ -5,20 +5,15 @@ using Commodity.Interfaces;
 
 namespace Commodity.Domain.Core
 {
-    public class EventData
+    public class EventStream : IEnumerable<IAggregateEvent>
     {
-        
-    }
-
-    public class EventStream : IEnumerable<EventData>
-    {
-        private readonly IEnumerator<EventData> _enumerator;
-        internal EventStream(IEnumerator<EventData> enumerator)
+        private readonly IEnumerator<IAggregateEvent> _enumerator;
+        internal EventStream(IEnumerator<IAggregateEvent> enumerator)
         {
             _enumerator = enumerator;
         }
 
-        public IEnumerator<EventData> GetEnumerator()
+        public IEnumerator<IAggregateEvent> GetEnumerator()
         {
             return _enumerator;
         }

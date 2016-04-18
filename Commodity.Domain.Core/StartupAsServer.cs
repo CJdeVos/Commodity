@@ -5,6 +5,7 @@ using Commodity.Common;
 using System.Linq;
 using Commodity.Domain.Core.Interfaces;
 using MongoDB.Driver;
+using MongoDB.Bson.Serialization;
 
 namespace Commodity.Domain.Core
 {
@@ -30,15 +31,18 @@ namespace Commodity.Domain.Core
             _kernel.Bind<MongoClient>().ToSelf().WithConstructorArgument("connectionString", "mongodb://localhost:27017");
             _kernel.Bind<IMongoDatabase>().ToMethod(ctx => ctx.Kernel.Get<MongoClient>().GetDatabase("events")).Named("Events");
 
-
-
-            // find all event handlers and bind to self.
+            // Find all event handlers and bind to self.
             var allEventHandlers = AppDomain.CurrentDomain.GetAssemblies().FindTypesImplementingInterface(typeof(IEventHandler<>));
             foreach (var eventHandlerType in allEventHandlers)
             {
                 var interfaces = eventHandlerType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof (IEventHandler<>)).ToArray();
                 _kernel.Bind(interfaces).To(eventHandlerType);
             }
+
+            // Register serializers fpor MongoDB
+            //BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new CustomIAggregateEventSerializer());
+            // Check event store for availability of events
+
         }
 
         public void Stop()

@@ -7,128 +7,97 @@ using MongoDB.Bson;
 using Ninject;
 using MongoDB.Driver;
 using System.Threading.Tasks;
+using MongoDB.Bson.Serialization;
 
 namespace Commodity.Domain.Core
 {
+    internal static class EventStoreExtensions
+    {
+        internal static async Task<BsonDocument> FindStream(this IMongoCollection<BsonDocument> collection, string streamName)
+        {
+            return await collection.Find(doc => doc["_id"] == streamName).SingleOrDefaultAsync();
+        }
+    }
+
     public class EventStore : IEventStore
     {
-        //private readonly IEventStorage _eventStorage;
-        //private readonly IEventPublisher _eventPublisher;
-        //public EventStore(IEventStorage eventStorage, IEventPublisher eventPublisher)
-        //{
-        //    _eventStorage = eventStorage;
-        //    _eventPublisher = eventPublisher;
-        //}
-
-        //private TAggregate CreateNewAggregate<TAggregate>(Guid id)
-        //    where TAggregate : Aggregate
-        //{
-        //    var constructorInfo = typeof(TAggregate).GetConstructor(new[] { typeof(Guid) });
-        //    if (constructorInfo == null)
-        //        throw new Exception("Constructor of aggregate root to pass Guid id not found.");
-
-        //    TAggregate aggregateRoot = (TAggregate)constructorInfo.Invoke(new[] { (object)id });
-        //    return aggregateRoot;
-        //}
-
-        //public TAggregate Load<TAggregate>(Guid aggregateRootId) 
-        //    where TAggregate : Aggregate
-        //{
-        //    if (aggregateRootId == Guid.Empty)
-        //        throw new ArgumentNullException("aggregateRootId");
-
-        //    var eventStream = _eventStorage.GetEventStream(aggregateRootId);
-        //    if (eventStream == null)
-        //        return default(TAggregate);
-
-        //    return CreateNewAggregate<TAggregate>(aggregateRootId);
-
-        //    // without playing?
-        //    // play events?
-        //    //aggr.Replay(eventStream);
-
-        //    //return aggregateRoot;
-        //}
-
-        //public TAggregate LoadNew<TAggregate>() where TAggregate : Aggregate
-        //{
-        //    return CreateNewAggregate<TAggregate>(Guid.NewGuid());
-        //}
-
-        //public void Persist<TAggregate>(TAggregate aggregate)
-        //    where TAggregate : Aggregate
-        //{
-        //    if (aggregate == null)
-        //        throw new ArgumentNullException("aggregate");
-
-        //    // test for uncommitted save unsaved changes
-        //    var uncommittedEvents = aggregate.GetUncommittedEvents().ToArray();
-        //    if (uncommittedEvents.Any() == false)
-        //        return;
-
-        //    _eventStorage.Persist(aggregate.AggregateId, uncommittedEvents);
-
-        //    // publish events
-        //    _eventPublisher.Publish(aggregate.AggregateId, uncommittedEvents);
-
-        //    // commit actual aggregate
-        //    aggregate.Commit();
-        //}
-
         private readonly IMongoDatabase _database;
         public EventStore([Named("Events")]IMongoDatabase database)
         {
             _database = database;
         }
 
+        
 
         public async Task<EventStream> GetEventStream(string streamName, int startVersion, int? untilVersion)
         {
             // currently we always have just one page
             var collection = _database.GetCollection<BsonDocument>("events");
-            BsonDocument streamDocument = await collection.Find(doc => doc["_id"] == streamName).SingleAsync();
+            BsonDocument streamDocument = await collection.FindStream(streamName);
             
             // streamdocument currently contains all events within 1 document
             return new EventStream(CreateEnumerator(streamDocument["Events"].AsBsonArray));
         }
 
-        private IEnumerator<EventData> CreateEnumerator(BsonArray bsonArray)
+        private IEnumerator<IAggregateEvent> CreateEnumerator(BsonArray bsonArray)
         {
             foreach (BsonValue bsonValue in bsonArray)
             {
-                yield return ConstructEventData(bsonValue);
+                yield return ConstructEvent(bsonValue);
             }
         }
 
         public async void AppendToEventStream(string streamName, int expectedVersion, IEnumerable<IAggregateEvent> events)
         {
             var collection = _database.GetCollection<BsonDocument>("events");
+
+            BsonDocument streamDocument = await collection.FindStream(streamName);
+            if (streamDocument == null)
+            {
+                if (expectedVersion > 0)
+                    throw new Exception("Stream not found but expected a version>0.");
+            }
+            else
+            {
+                var version = streamDocument["committedVersion"].AsInt32;
+                if (version != expectedVersion) 
+                    throw new Exception(String.Format("Stream found, but version is different. Current version is {0}, expected is {1}.", version, expectedVersion));
+            }
+            
+            var eventsAsBsonDocuments = events.Select(@event => @event.ToBsonDocument()).ToList();
+
+            // Update the document
             UpdateResult res = await collection.UpdateOneAsync(
                 Builders<BsonDocument>.Filter.Eq("_id", streamName),
-                Builders<BsonDocument>.Update.Push("Events", "testwaarde")
+                Builders<BsonDocument>.Update
+                .PushEach("Events", eventsAsBsonDocuments)
+                .Set("committedVersion", expectedVersion+ eventsAsBsonDocuments.Count())
             );
-            if (res.MatchedCount==0)
+
+            if (res.MatchedCount == 0)
             {
                 BsonDocument newDoc = new BsonDocument()
                 {
-                    { "Events", new BsonArray()
+                    {"_id", streamName},
                     {
-                        "initialwaarde"
-                    } }
+                        "Events",
+                        new BsonArray(eventsAsBsonDocuments)
+                    },
+                    {"committedVersion", eventsAsBsonDocuments.Count}
                 };
                 // create the document
                 await collection.InsertOneAsync(newDoc);
             }
-//            BsonDocument streamDocument = await collection.Find(doc => doc["_id"] == streamName).FirstOrDefaultAsync();
-
-            // append?
-
-            //throw new NotImplementedException();
         }
 
-        private EventData ConstructEventData(BsonValue bsonValue)
+        private IAggregateEvent ConstructEvent(BsonValue bsonValue)
         {
-            return null;
+            return BsonSerializer.Deserialize<IAggregateEvent>(bsonValue.AsBsonDocument);
+        }
+
+        public string[] GetEventNamesUsedInStore()
+        {
+            throw new NotImplementedException();
         }
     }
 }

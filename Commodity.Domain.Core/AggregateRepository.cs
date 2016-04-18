@@ -28,9 +28,8 @@ namespace Commodity.Domain.Core
 
             // load stream and apply events
             var eventStream = await _eventStore.GetEventStream(streamName, 0, version);
-            foreach (var @event in eventStream)
-            {
-                aggregate.ApplyEvent(DeserializeEvent(@event));
+            foreach (var @event in eventStream){
+                aggregate.ApplyEvent(@event);
             }
             aggregate.Commit();
 
@@ -59,13 +58,7 @@ namespace Commodity.Domain.Core
             // commit aggregate (e.g. reset)
             aggregate.Commit();
         }
-
-        private IAggregateEvent DeserializeEvent(EventData eventData)
-        {
-            // what is data?
-            return null;
-        }
-
+        
         private TAggregate ConstructAggregate<TAggregate>(Guid aggregateId)
         {
             var constructorInfo = typeof(TAggregate).GetConstructor(new[] { typeof(Guid) });
