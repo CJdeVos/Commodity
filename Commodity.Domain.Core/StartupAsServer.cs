@@ -4,8 +4,8 @@ using System;
 using Commodity.Common;
 using System.Linq;
 using Commodity.Domain.Core.Interfaces;
-using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 
 namespace Commodity.Domain.Core
 {
@@ -39,10 +39,33 @@ namespace Commodity.Domain.Core
                 _kernel.Bind(interfaces).To(eventHandlerType);
             }
 
-            // Register serializers fpor MongoDB
-            //BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new CustomIAggregateEventSerializer());
-            // Check event store for availability of events
 
+            var commoditySerializerResolver = new CommoditySerializerResolver((f) => {
+                var csType = typeof (ICommoditySerializer<>);
+                var gcsType = csType.MakeGenericType(f);
+
+                return _kernel.Get(gcsType);
+            });
+
+            
+
+            //commoditySerializerResolver.AddR
+            _kernel.Bind<IResolveCommoditySerializer>().ToConstant(commoditySerializerResolver);
+            commoditySerializerResolver.AddSerializer<StandardCommoditySerializer>((t)=>true, 500);
+            commoditySerializerResolver.AddSerializer<AggregateEventSerializer>().For<IAggregateEvent>();
+
+            // find all ICommoditySerializer(s)
+            //var allCommoditySerializers = AppDomain.CurrentDomain.GetAssemblies().FindTypesImplementingInterface(typeof(ICommoditySerializer<>));
+            //foreach (var commoditySerializerType in allCommoditySerializers)
+            //{
+            //    // Bind for kernel loading
+            //    var interfaces = commoditySerializerType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommoditySerializer<>)).ToArray();
+            //    _kernel.Bind(interfaces).To(commoditySerializerType);
+
+            //    //commoditySerializerResolver.AddSerializer(, 500);
+            //}
+
+            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommoditySerializer<IAggregateEvent>(_kernel.Get<ICommoditySerializer<IAggregateEvent>>()));
         }
 
         public void Stop()

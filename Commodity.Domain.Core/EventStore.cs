@@ -3,6 +3,7 @@ using Commodity.Interfaces;
 using System.Linq;
 using Commodity.Domain.Core.Interfaces;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using MongoDB.Bson;
 using Ninject;
 using MongoDB.Driver;
@@ -27,8 +28,6 @@ namespace Commodity.Domain.Core
             _database = database;
         }
 
-        
-
         public async Task<EventStream> GetEventStream(string streamName, int startVersion, int? untilVersion)
         {
             // currently we always have just one page
@@ -49,6 +48,11 @@ namespace Commodity.Domain.Core
 
         public async void AppendToEventStream(string streamName, int expectedVersion, IEnumerable<IAggregateEvent> events)
         {
+
+            var x = events.Select(@event => @event.ToBsonDocument()).ToList();
+
+            
+            //BsonSerializer.Deserialize()
             var collection = _database.GetCollection<BsonDocument>("events");
 
             BsonDocument streamDocument = await collection.FindStream(streamName);
