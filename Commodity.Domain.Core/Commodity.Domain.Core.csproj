@@ -57,7 +57,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregate.cs" />
+    <Compile Include="AggregateEventSerializer.cs" />
     <Compile Include="AggregateRepository.cs" />
+    <Compile Include="BsonCommodityReader.cs" />
+    <Compile Include="BsonCommodityWriter.cs" />
+    <Compile Include="CommoditySerializerResolver.cs" />
+    <Compile Include="ForwardToCommoditySerializer.cs" />
+    <Compile Include="ICommodityReader.cs" />
+    <Compile Include="ICommoditySerializer.cs" />
+    <Compile Include="ICommodityWriter.cs" />
+    <Compile Include="IResolveCommoditySerializer.cs" />
     <Compile Include="StartupAsServer.cs" />
     <Compile Include="EventContext.cs" />
     <Compile Include="EventPublisher.cs" />

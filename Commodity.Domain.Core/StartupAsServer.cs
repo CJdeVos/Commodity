@@ -4,6 +4,7 @@ using System;
 using Commodity.Common;
 using System.Linq;
 using Commodity.Domain.Core.Interfaces;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace Commodity.Domain.Core
@@ -39,6 +40,26 @@ namespace Commodity.Domain.Core
                 var interfaces = eventHandlerType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof (IEventHandler<>)).ToArray();
                 _kernel.Bind(interfaces).To(eventHandlerType);
             }
+
+
+            var commoditySerializerResolver = new CommoditySerializerResolver((f) => {
+                var csType = typeof (ICommoditySerializer<>);
+                var gcsType = csType.MakeGenericType(f);
+
+                return _kernel.Get(gcsType);
+            });
+            //commoditySerializerResolver.AddR
+            _kernel.Bind<IResolveCommoditySerializer>().ToConstant(commoditySerializerResolver);
+
+            // find all ICommoditySerializer(s)
+            var allCommoditySerializers = AppDomain.CurrentDomain.GetAssemblies().FindTypesImplementingInterface(typeof(ICommoditySerializer<>));
+            foreach (var commoditySerializerType in allCommoditySerializers)
+            {
+                var interfaces = commoditySerializerType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommoditySerializer<>)).ToArray();
+                _kernel.Bind(interfaces).To(commoditySerializerType);
+            }
+
+            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommoditySerializer<IAggregateEvent>(_kernel.Get<ICommoditySerializer<IAggregateEvent>>()));
         }
 
         public void Stop()
