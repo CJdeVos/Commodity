@@ -3,36 +3,32 @@ using Commodity.Interfaces;
 
 namespace Commodity.Domain.Core
 {
-    public class AggregateEventSerializer : ICommoditySerializer<IAggregateEvent>
+    public class AggregateEventSerializer : CommoditySerializer<IAggregateEvent>
     {
-        private readonly IResolveCommoditySerializer _resolver;
-        public AggregateEventSerializer(IResolveCommoditySerializer resolver)
-        {
-            _resolver = resolver;
-        }
-
-        public void Serialize(ICommodityWriter writer, IAggregateEvent o)
+        public override void Serialize(ICommodityWriter writer, IAggregateEvent o)
         {
             writer.WriteStartOfObject();
             writer.WriteName("t");
             writer.WriteString(o.GetType().FullName);
             writer.WriteName("t");
-            writer.WriteResolved(_resolver, o.GetType(), o);
+            CommoditySerializer.Serialize(writer, o.GetType(), o);
             writer.WriteEndOfObject();
         }
 
-        public IAggregateEvent Deserialize(ICommodityReader reader)
+        public override IAggregateEvent Deserialize(ICommodityReader reader)
         {
             throw new NotImplementedException();
         }
+    }
 
+    public class DefaultSerializer : ICommoditySerializer
+    {
         public void Serialize(ICommodityWriter writer, object o)
         {
-
             throw new NotImplementedException();
         }
 
-        object ICommoditySerializer.Deserialize(ICommodityReader reader)
+        public object Deserialize(ICommodityReader reader)
         {
             throw new NotImplementedException();
         }

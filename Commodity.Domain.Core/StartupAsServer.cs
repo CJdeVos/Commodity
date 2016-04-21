@@ -1,8 +1,10 @@
 ﻿using Commodity.Interfaces;
 using Ninject;
 using System;
+using System.Collections.Generic;
 using Commodity.Common;
 using System.Linq;
+using Commodity.Domain.Core.Events;
 using Commodity.Domain.Core.Interfaces;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -40,19 +42,36 @@ namespace Commodity.Domain.Core
             }
 
 
-            var commoditySerializerResolver = new CommoditySerializerResolver((f) => {
-                var csType = typeof (ICommoditySerializer<>);
-                var gcsType = csType.MakeGenericType(f);
+            CommoditySerializer.RegisterSerializer(typeof(IAggregateEvent), new AggregateEventSerializer(), 500);
+            CommoditySerializer.RegisterSerializer((f)=>true, new DefaultSerializer());
 
-                return _kernel.Get(gcsType);
-            });
+
+            //var commoditySerializerResolver = new CommoditySerializerResolver((f) => {
+            //    var csType = typeof (ICommoditySerializer<>);
+            //    var gcsType = csType.MakeGenericType(f);
+
+            //    return _kernel.Get(gcsType);
+            //});
 
             
 
-            //commoditySerializerResolver.AddR
-            _kernel.Bind<IResolveCommoditySerializer>().ToConstant(commoditySerializerResolver);
-            commoditySerializerResolver.AddSerializer<StandardCommoditySerializer>((t)=>true, 500);
-            commoditySerializerResolver.AddSerializer<AggregateEventSerializer>().For<IAggregateEvent>();
+            ////commoditySerializerResolver.AddR
+            //_kernel.Bind<IResolveCommoditySerializer>().ToConstant(commoditySerializerResolver);
+            //commoditySerializerResolver.AddSerializer<StandardCommoditySerializer>((t)=>true, 500);
+
+            // Find all CommoditySerializer<>s and add them
+            // 
+            
+            //commoditySerializerResolver.Serialize(typeof(IEnumerable<>)).With<AggregateEventSerializer>(); 
+
+            //commoditySerializerResolver.AddSerializer(typeof(Created<>)).With<AggregateEventSerializer>();
+
+            //commoditySerializerResolver.AddSerializer<AggregateEventSerializer>(typeof(IAggregateEvent));
+            //commoditySerializerResolver.RegisterSerializer<AggregateEventSerializer>(Guid.NewGuid(), typeof(IAggregateEvent));
+
+            //commoditySerializerResolver.Register(new FallbackSerializer(), new SerializerId(Guid.NewGuid()))
+            //    .To(typeof(IAggregateEvent))
+            //    .To(typeof(object));
 
             // find all ICommoditySerializer(s)
             //var allCommoditySerializers = AppDomain.CurrentDomain.GetAssemblies().FindTypesImplementingInterface(typeof(ICommoditySerializer<>));
@@ -65,7 +84,7 @@ namespace Commodity.Domain.Core
             //    //commoditySerializerResolver.AddSerializer(, 500);
             //}
 
-            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommoditySerializer<IAggregateEvent>(_kernel.Get<ICommoditySerializer<IAggregateEvent>>()));
+            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommoditySerializer<IAggregateEvent>());
         }
 
         public void Stop()

@@ -35,9 +35,9 @@ namespace Commodity.Domain.Core
             return this;
         }
 
-        public ICommodityWriter WriteResolved(IResolveCommoditySerializer resolver, Type nominalType, object value)
+        public ICommodityWriter WriteResolved(Type nominalType, object value)
         {
-            resolver.Serialize(this, nominalType, value);
+            CommoditySerializer.Serialize(this, nominalType, value);
             return this;
         }
     }

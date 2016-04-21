@@ -8,6 +8,5 @@ namespace Commodity.Domain.Core
         ICommodityWriter WriteEndOfObject();
         ICommodityWriter WriteName(string name);
         ICommodityWriter WriteString(string value);
-        ICommodityWriter WriteResolved(IResolveCommoditySerializer resolver, Type nominalType, object value);
     }
 }
