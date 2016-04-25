@@ -29,6 +29,18 @@ namespace Commodity.Domain.Core
             return this;
         }
 
+        public ICommodityWriter WriteType(Type type)
+        {
+            _writer.WriteString(type.FullName);
+            return this;
+        }
+
+        public ICommodityWriter WriteNull()
+        {
+            _writer.WriteNull();
+            return this;
+        }
+
         public ICommodityWriter WriteString(string value)
         {
             _writer.WriteString(value);

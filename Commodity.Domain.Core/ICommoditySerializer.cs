@@ -59,7 +59,7 @@ namespace Commodity.Domain.Core
             if (o == null){
                 throw new NotImplementedException(String.Format("No CommoditySerializer found for object of type {0}", nominalType.FullName));
             }
-            o.Serialize(writer, value);
+            o.Serialize(writer, nominalType, value);
         }
 
         public static T Deserialize<T>(ICommodityReader reader)
@@ -70,7 +70,7 @@ namespace Commodity.Domain.Core
 
     public interface ICommoditySerializer 
     {
-        void Serialize(ICommodityWriter writer, object o);
+        void Serialize(ICommodityWriter writer, Type nominalType, object value);
         object Deserialize(ICommodityReader reader);
     }
 
@@ -79,9 +79,9 @@ namespace Commodity.Domain.Core
         public abstract void Serialize(ICommodityWriter writer, T o);
         public abstract T Deserialize(ICommodityReader reader);
 
-        void ICommoditySerializer.Serialize(ICommodityWriter writer, object o)
+        void ICommoditySerializer.Serialize(ICommodityWriter writer, Type nominalType, object o)
         {
-            this.Serialize(writer, (T) o);
+            this.Serialize(writer, (T)o);
         }
 
         object ICommoditySerializer.Deserialize(ICommodityReader reader)

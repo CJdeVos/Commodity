@@ -71,7 +71,6 @@
     <Compile Include="ICommoditySerializer.cs" />
     <Compile Include="ICommodityWriter.cs" />
     <Compile Include="IResolveCommoditySerializer.cs" />
-    <Compile Include="StandardCommoditySerializer.cs" />
     <Compile Include="StartupAsServer.cs" />
     <Compile Include="EventContext.cs" />
     <Compile Include="EventPublisher.cs" />
