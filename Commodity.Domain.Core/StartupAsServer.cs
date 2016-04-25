@@ -42,7 +42,7 @@ namespace Commodity.Domain.Core
             }
 
 
-            CommoditySerializer.RegisterSerializer(typeof(IAggregateEvent), new AggregateEventSerializer(), 500);
+            //CommoditySerializer.RegisterSerializer(typeof(IAggregateEvent), new AggregateEventSerializer(), 500);
             CommoditySerializer.RegisterSerializer((f)=>true, new DefaultSerializer());
 
 

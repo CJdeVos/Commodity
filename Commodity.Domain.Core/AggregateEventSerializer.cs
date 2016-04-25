@@ -19,6 +19,8 @@ namespace Commodity.Domain.Core
 
         public override IAggregateEvent Deserialize(ICommodityReader reader)
         {
+            
+
             throw new NotImplementedException();
         }
     }
@@ -27,26 +29,27 @@ namespace Commodity.Domain.Core
     {
         public void Serialize(ICommodityWriter writer, Type nominalType, object value)
         {
-            writer.WriteStartOfObject();
-            writer.WriteName("t");
-            writer.WriteType(nominalType);
-            writer.WriteName("v");
             if (value == null)
             {
                 writer.WriteNull();
+                return;
             }
-            else
-            {
-                writer.WriteStartOfObject();
-                // loop over serializable attributes
-                SerializeAttributes(writer, nominalType, value);
-                writer.WriteEndOfObject();
-            }
+
+            var actualType = value.GetType();
+            writer.WriteStartOfObject();
+            writer.WriteName("t");
+            writer.WriteType(actualType);
+            writer.WriteName("v");
+            writer.WriteStartOfObject();
+            SerializeAttributes(writer, actualType, value);
+            writer.WriteEndOfObject();
             writer.WriteEndOfObject();
         }
 
-        public object Deserialize(ICommodityReader reader)
+        public object Deserialize(ICommodityReader reader, Type nominalType)
         {
+            
+            reader.ReadStartOfObject();
             throw new NotImplementedException();
         }
 

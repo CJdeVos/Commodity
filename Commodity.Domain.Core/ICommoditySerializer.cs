@@ -53,25 +53,34 @@ namespace Commodity.Domain.Core
             return serializer.Serializer;
         }
 
-        public static void Serialize(ICommodityWriter writer, Type nominalType, object value)
+        private static ICommoditySerializer EnsureSerializer(Type nominalType)
         {
             ICommoditySerializer o = Resolve(nominalType);
-            if (o == null){
+            if (o == null)
+            {
                 throw new NotImplementedException(String.Format("No CommoditySerializer found for object of type {0}", nominalType.FullName));
             }
+            return o;
+        }
+
+        public static void Serialize(ICommodityWriter writer, Type nominalType, object value)
+        {
+            ICommoditySerializer o = EnsureSerializer(nominalType);
             o.Serialize(writer, nominalType, value);
         }
 
         public static T Deserialize<T>(ICommodityReader reader)
         {
-            throw new NotImplementedException();
+            var nominalType = typeof (T);
+            ICommoditySerializer o = EnsureSerializer(nominalType);
+            return (T)o.Deserialize(reader, nominalType);
         }
     }
 
     public interface ICommoditySerializer 
     {
         void Serialize(ICommodityWriter writer, Type nominalType, object value);
-        object Deserialize(ICommodityReader reader);
+        object Deserialize(ICommodityReader reader, Type nominalType);
     }
 
     public abstract class CommoditySerializer<T> : ICommoditySerializer
@@ -84,7 +93,7 @@ namespace Commodity.Domain.Core
             this.Serialize(writer, (T)o);
         }
 
-        object ICommoditySerializer.Deserialize(ICommodityReader reader)
+        object ICommoditySerializer.Deserialize(ICommodityReader reader, Type nominalType)
         {
             return Deserialize(reader);
         }

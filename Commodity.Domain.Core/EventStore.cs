@@ -50,7 +50,7 @@ namespace Commodity.Domain.Core
         {
 
             var x = events.Select(@event => @event.ToBsonDocument()).ToList();
-
+            var y = x.Select(f => BsonSerializer.Deserialize<IAggregateEvent>(f)).ToList();
             
             //BsonSerializer.Deserialize()
             var collection = _database.GetCollection<BsonDocument>("events");
