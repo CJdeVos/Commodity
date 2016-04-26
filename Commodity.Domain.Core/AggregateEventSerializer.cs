@@ -2,28 +2,29 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Commodity.Interfaces;
+using MongoDB.Bson;
 
 namespace Commodity.Domain.Core
 {
-    public class AggregateEventSerializer : CommoditySerializer<IAggregateEvent>
-    {
-        public override void Serialize(ICommodityWriter writer, IAggregateEvent o)
-        {
-            writer.WriteStartOfObject();
-            writer.WriteName("t");
-            writer.WriteString(o.GetType().FullName);
-            writer.WriteName("i");
-            CommoditySerializer.Serialize(writer, o.GetType(), o);
-            writer.WriteEndOfObject();
-        }
+    //public class AggregateEventSerializer : CommoditySerializer<IAggregateEvent>
+    //{
+    //    public override void Serialize(ICommodityWriter writer, IAggregateEvent o)
+    //    {
+    //        writer.WriteStartOfObject();
+    //        writer.WriteName("t");
+    //        writer.WriteString(o.GetType().FullName);
+    //        writer.WriteName("i");
+    //        CommoditySerializer.Serialize(writer, o.GetType(), o);
+    //        writer.WriteEndOfObject();
+    //    }
 
-        public override IAggregateEvent Deserialize(ICommodityReader reader)
-        {
+    //    public override IAggregateEvent Deserialize(ICommodityReader reader)
+    //    {
             
 
-            throw new NotImplementedException();
-        }
-    }
+    //        throw new NotImplementedException();
+    //    }
+    //}
 
     public class DefaultSerializer : ICommoditySerializer
     {
@@ -48,20 +49,40 @@ namespace Commodity.Domain.Core
 
         public object Deserialize(ICommodityReader reader, Type nominalType)
         {
-            
-            reader.ReadStartOfObject();
-            throw new NotImplementedException();
+            BsonType bsonType = reader.GetCurrentBsonType();
+            switch (bsonType)
+            {
+                case BsonType.Null:
+                    return null;
+                    break;
+                case BsonType.Document:
+                    reader.ReadStartOfObject();
+                    var typeName = reader.ReadName();
+                    var actualType = reader.ReadType();
+                    var valueName = reader.ReadName();
+                    reader.ReadStartOfObject();
+                    DeserializeAttributes(reader, actualType);
+                    reader.ReadEndOfObject();
+                    reader.ReadEndOfObject();
+                    break;
+            }
+            return null;
         }
 
         internal class MemberInfoAndAction
         {
-            public MemberInfoAndAction(MemberInfo memberInfo, Action<ICommodityWriter, MemberInfo, object> action)
+            public MemberInfoAndAction(
+                MemberInfo memberInfo, 
+                Action<ICommodityWriter, MemberInfo, object> writeAction, 
+                Func<ICommodityReader, MemberInfo, object> readAction)
             {
                 MemberInfo = memberInfo;
-                Action = action;
+                WriteAction = writeAction;
+                ReadAction = readAction;
             }
             public MemberInfo MemberInfo { get; private set; }
-            public Action<ICommodityWriter, MemberInfo, object> Action { get; private set; }
+            public Action<ICommodityWriter, MemberInfo, object> WriteAction { get; private set; }
+            public Func<ICommodityReader, MemberInfo, object> ReadAction { get; private set; }
         }
 
         private MemberInfoAndAction GetMemberSerializeAction(MemberInfo memberInfo)
@@ -70,7 +91,7 @@ namespace Commodity.Domain.Core
             {
                 var propInfo = (PropertyInfo)memberInfo;
                 if(propInfo.CanRead && propInfo.CanWrite)
-                    return new MemberInfoAndAction(memberInfo, _serializeMemberAsProperty);
+                    return new MemberInfoAndAction(memberInfo, SerializeMemberAsProperty, DeserializeMemberAsProperty);
             }
             return null;
         }
@@ -89,11 +110,21 @@ namespace Commodity.Domain.Core
             foreach (MemberInfoAndAction memberAndAction in serializableMembers)
             {
                 writer.WriteName(memberAndAction.MemberInfo.Name);
-                memberAndAction.Action(writer, memberAndAction.MemberInfo, value);
+                memberAndAction.WriteAction(writer, memberAndAction.MemberInfo, value);
             }
         }
 
-        private static readonly Action<ICommodityWriter, MemberInfo, object> _serializeMemberAsProperty = (writer, memberInfo, value) =>
+        private void DeserializeAttributes(ICommodityReader reader, Type actualType)
+        {
+            var serializableMembers = GetSerializableMemberInfos(actualType);
+            foreach (MemberInfoAndAction memberAndAction in serializableMembers)
+            {
+                string name = reader.ReadName();
+                object value = memberAndAction.ReadAction(reader, memberAndAction.MemberInfo);
+                //memberAndAction.Action(writer, memberAndAction.MemberInfo, value);
+            }
+        }
+        private static readonly Action<ICommodityWriter, MemberInfo, object> SerializeMemberAsProperty = (writer, memberInfo, value) =>
         {
             var propertyInfo = (PropertyInfo)memberInfo;
             var propertyValue = propertyInfo.GetValue(value);
@@ -101,6 +132,17 @@ namespace Commodity.Domain.Core
                 writer.WriteNull();
             else
                 writer.WriteString(propertyValue.ToString());
+        };
+
+        private static readonly Func<ICommodityReader, MemberInfo, object> DeserializeMemberAsProperty = (reader, memberInfo) =>
+        {
+            var bsonType = reader.GetCurrentBsonType();
+            if (bsonType == BsonType.Null)
+            {
+                reader.ReadNull();
+                return null;
+            }
+            return reader.ReadString();
         };
     }
 }

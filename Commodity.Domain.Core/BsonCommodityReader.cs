@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Bson;
 using MongoDB.Bson.IO;
 
 namespace Commodity.Domain.Core
@@ -10,9 +11,9 @@ namespace Commodity.Domain.Core
         public BsonCommodityReader(IBsonReader reader)
         {
             _reader = reader;
-
-            
         }
+
+
 
         public void ReadEndOfObject()
         {
@@ -29,10 +30,13 @@ namespace Commodity.Domain.Core
             _reader.ReadNull();
         }
 
+        public BsonType GetCurrentBsonType()
+        {
+            return _reader.GetCurrentBsonType();
+        }
 
         public void ReadStartOfObject()
         {
-            var currentBsonType = _reader.GetCurrentBsonType();
             _reader.ReadStartDocument();
         }
 
@@ -43,8 +47,8 @@ namespace Commodity.Domain.Core
 
         public Type ReadType()
         {
-            //_reader.CurrentBsonType
-            throw new NotImplementedException();
+            string typeAsString = _reader.ReadString();
+            return Type.GetType(typeAsString);
         }
     }
 }
