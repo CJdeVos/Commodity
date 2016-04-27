@@ -3,10 +3,10 @@ using MongoDB.Bson.Serialization.Serializers;
 
 namespace Commodity.Domain.Core
 {
-    public class ForwardToCommoditySerializer<T> : SerializerBase<T>
+    public class ForwardToCommodityBsonSerializer<T> : SerializerBase<T>
     {
         //private readonly ICommoditySerializer<T> _commoditySerializer;
-        public ForwardToCommoditySerializer() //ICommoditySerializer<T> commoditySerializer)
+        public ForwardToCommodityBsonSerializer() //ICommoditySerializer<T> commoditySerializer)
         {
             //_commoditySerializer = commoditySerializer;
         }
@@ -14,13 +14,13 @@ namespace Commodity.Domain.Core
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, T value)
         {
             ICommodityWriter commodityWriter = new BsonCommodityWriter(context.Writer);
-            CommoditySerializer.Serialize(commodityWriter, typeof(T), value);
+            CommodityBsonSerializer.Serialize(commodityWriter, typeof(T), value);
         }
 
         public override T Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             ICommodityReader commodityReader = new BsonCommodityReader(context.Reader);
-            return CommoditySerializer.Deserialize<T>(commodityReader);
+            return CommodityBsonSerializer.Deserialize<T>(commodityReader);
         }
     }
 }

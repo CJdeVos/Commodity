@@ -5,13 +5,16 @@ using System.Runtime.InteropServices;
 
 namespace Commodity.Domain.Core
 {
-    public static class CommoditySerializer
+    public static class CommodityBsonSerializer
     {
         private class DescendingSerializerComparer<T> : IComparer<T>
         {
             public int Compare(T x, T y)
             {
-                return Comparer<T>.Default.Compare(y, x);
+                int result = Comparer<T>.Default.Compare(y, x);
+                if (result == 0)
+                    return 1;
+                return result;
             }
         }
 
@@ -58,7 +61,7 @@ namespace Commodity.Domain.Core
             ICommoditySerializer o = Resolve(nominalType);
             if (o == null)
             {
-                throw new NotImplementedException(String.Format("No CommoditySerializer found for object of type {0}", nominalType.FullName));
+                throw new NotImplementedException(String.Format("No CommodityBsonSerializer found for object of type {0}", nominalType.FullName));
             }
             return o;
         }
@@ -67,6 +70,11 @@ namespace Commodity.Domain.Core
         {
             ICommoditySerializer o = EnsureSerializer(nominalType);
             o.Serialize(writer, nominalType, value);
+        }
+
+        public static void Serialize<T>(ICommodityWriter writer, T value)
+        {
+            Serialize(writer, typeof(T), value);
         }
 
         public static T Deserialize<T>(ICommodityReader reader)
@@ -98,21 +106,4 @@ namespace Commodity.Domain.Core
             return Deserialize(reader);
         }
     }
-
-    //public abstract class CommoditySerializer : ICommoditySerializer
-    //{
-    //    public abstract void Serialize(ICommodityWriter writer, object o);
-    //    public abstract T Deserialize<T>(ICommodityReader reader);
-    //}
-
-    //public abstract class CommoditySerializer<T> : CommoditySerializer, ICommoditySerializer<T>
-    //{
-    //    public override void Serialize(ICommodityWriter writer, object o){
-    //        Serialize(writer, (T)o);
-    //    }
-
-    //    public abstract void Serialize(ICommodityWriter writer, T o);
-    //    public abstract T Deserialize(ICommodityReader reader);
-    //}
-
 }

@@ -28,7 +28,17 @@ namespace Commodity.Common
                     allTypes.AddRange(assembly.GetTypes().Where(t => t.GetInterfaces().Contains(typeToFind)));
                 }
             }
-            return allTypes.ToEnumerable();
+            return allTypes;
+        }
+
+        public static IEnumerable<Type> FindTypesWithAttribute<TAttributeType>(this System.Reflection.Assembly[] assemblies) where TAttributeType: Attribute
+        {
+            var allTypes = new List<Type>();
+            foreach (var assembly in assemblies)
+            {
+                allTypes.AddRange(assembly.GetTypes().Where(t => t.HasAttribute<TAttributeType>()));
+            }
+            return allTypes;
         }
     } 
 

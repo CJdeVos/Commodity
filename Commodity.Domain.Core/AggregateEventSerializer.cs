@@ -6,7 +6,7 @@ using MongoDB.Bson;
 
 namespace Commodity.Domain.Core
 {
-    //public class AggregateEventSerializer : CommoditySerializer<IAggregateEvent>
+    //public class AggregateEventSerializer : CommodityBsonSerializer<IAggregateEvent>
     //{
     //    public override void Serialize(ICommodityWriter writer, IAggregateEvent o)
     //    {
@@ -14,17 +14,39 @@ namespace Commodity.Domain.Core
     //        writer.WriteName("t");
     //        writer.WriteString(o.GetType().FullName);
     //        writer.WriteName("i");
-    //        CommoditySerializer.Serialize(writer, o.GetType(), o);
+    //        CommodityBsonSerializer.Serialize(writer, o.GetType(), o);
     //        writer.WriteEndOfObject();
     //    }
 
     //    public override IAggregateEvent Deserialize(ICommodityReader reader)
     //    {
-            
+
 
     //        throw new NotImplementedException();
     //    }
     //}
+
+    public class TypeSerializer : CommoditySerializer<Type>
+    {
+        private readonly ICommodityBsonTypeResolver _typeResolver;
+        public TypeSerializer(ICommodityBsonTypeResolver typeResolver)
+        {
+            _typeResolver = typeResolver;
+        }
+
+        public override Type Deserialize(ICommodityReader reader)
+        {
+            string handle = reader.ReadString();
+            return _typeResolver.GetTypeFromHandle(handle);
+        }
+
+        public override void Serialize(ICommodityWriter writer, Type o)
+        {
+            string handle = _typeResolver.GetHandleFromType(o);
+            writer.WriteString(handle);
+        }
+        
+    }
 
     public class DefaultSerializer : ICommoditySerializer
     {
@@ -39,7 +61,8 @@ namespace Commodity.Domain.Core
             var actualType = value.GetType();
             writer.WriteStartOfObject();
             writer.WriteName("t");
-            writer.WriteType(actualType);
+            CommodityBsonSerializer.Serialize(writer, typeof(Type), actualType);
+            //writer.WriteType(actualType);
             writer.WriteName("v");
             writer.WriteStartOfObject();
             SerializeAttributes(writer, actualType, value);
@@ -58,7 +81,7 @@ namespace Commodity.Domain.Core
                 case BsonType.Document:
                     reader.ReadStartOfObject();
                     var typeName = reader.ReadName();
-                    var actualType = reader.ReadType();
+                    Type actualType = CommodityBsonSerializer.Deserialize<Type>(reader);
                     var valueName = reader.ReadName();
                     reader.ReadStartOfObject();
                     DeserializeAttributes(reader, actualType);

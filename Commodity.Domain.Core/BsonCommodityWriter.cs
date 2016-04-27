@@ -49,7 +49,7 @@ namespace Commodity.Domain.Core
 
         public ICommodityWriter WriteResolved(Type nominalType, object value)
         {
-            CommoditySerializer.Serialize(this, nominalType, value);
+            CommodityBsonSerializer.Serialize(this, nominalType, value);
             return this;
         }
     }

@@ -6,6 +6,7 @@ using Commodity.Domain.Core.Events;
 
 namespace Commodity.Domain.Schemas
 {
+    [CommodityBsonSerializable("Schema")]
     public class Schema : Aggregate
     {
         public Schema() { }

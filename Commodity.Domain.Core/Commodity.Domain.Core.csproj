@@ -65,8 +65,8 @@
     <Compile Include="AggregateRepository.cs" />
     <Compile Include="BsonCommodityReader.cs" />
     <Compile Include="BsonCommodityWriter.cs" />
-    <Compile Include="CommoditySerializerResolver.cs" />
-    <Compile Include="ForwardToCommoditySerializer.cs" />
+    <Compile Include="CommodityBsonSerializableAttribute.cs" />
+    <Compile Include="ForwardToCommodityBsonSerializer.cs" />
     <Compile Include="ICommodityReader.cs" />
     <Compile Include="ICommoditySerializer.cs" />
     <Compile Include="ICommodityWriter.cs" />

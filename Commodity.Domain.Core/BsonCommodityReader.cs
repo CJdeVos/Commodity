@@ -13,8 +13,6 @@ namespace Commodity.Domain.Core
             _reader = reader;
         }
 
-
-
         public void ReadEndOfObject()
         {
             _reader.ReadEndDocument();

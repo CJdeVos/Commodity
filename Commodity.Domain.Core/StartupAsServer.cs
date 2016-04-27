@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Commodity.Common;
 using System.Linq;
+using System.Reflection;
 using Commodity.Domain.Core.Events;
 using Commodity.Domain.Core.Interfaces;
 using MongoDB.Bson.Serialization;
@@ -42,49 +43,25 @@ namespace Commodity.Domain.Core
             }
 
 
-            //CommoditySerializer.RegisterSerializer(typeof(IAggregateEvent), new AggregateEventSerializer(), 500);
-            CommoditySerializer.RegisterSerializer((f)=>true, new DefaultSerializer());
+            CommodityBsonTypeResolver bsonTypeResolver = new CommodityBsonTypeResolver();
 
+            // Find all Types with attribute CommodityBsonSerializable
+            var allTypesWithSerializableAttribute = AppDomain.CurrentDomain.GetAssemblies().FindTypesWithAttribute<CommodityBsonSerializableAttribute>();
+            foreach (var type in allTypesWithSerializableAttribute)
+            {
+                CommodityBsonSerializableAttribute attr = type.GetCustomAttribute<CommodityBsonSerializableAttribute>();
+                bsonTypeResolver.Register(type, attr.UniqueId);
+            }
 
-            //var commoditySerializerResolver = new CommoditySerializerResolver((f) => {
-            //    var csType = typeof (ICommoditySerializer<>);
-            //    var gcsType = csType.MakeGenericType(f);
-
-            //    return _kernel.Get(gcsType);
-            //});
-
+            // Commodity Serializers
+            // 1) Type (priority 100)
+            CommodityBsonSerializer.RegisterSerializer((f) => typeof(Type).IsAssignableFrom(f), new TypeSerializer(bsonTypeResolver), 100);
+            // 2) * 
+            CommodityBsonSerializer.RegisterSerializer((f)=>true, new DefaultSerializer());
             
 
-            ////commoditySerializerResolver.AddR
-            //_kernel.Bind<IResolveCommoditySerializer>().ToConstant(commoditySerializerResolver);
-            //commoditySerializerResolver.AddSerializer<StandardCommoditySerializer>((t)=>true, 500);
-
-            // Find all CommoditySerializer<>s and add them
-            // 
-            
-            //commoditySerializerResolver.Serialize(typeof(IEnumerable<>)).With<AggregateEventSerializer>(); 
-
-            //commoditySerializerResolver.AddSerializer(typeof(Created<>)).With<AggregateEventSerializer>();
-
-            //commoditySerializerResolver.AddSerializer<AggregateEventSerializer>(typeof(IAggregateEvent));
-            //commoditySerializerResolver.RegisterSerializer<AggregateEventSerializer>(Guid.NewGuid(), typeof(IAggregateEvent));
-
-            //commoditySerializerResolver.Register(new FallbackSerializer(), new SerializerId(Guid.NewGuid()))
-            //    .To(typeof(IAggregateEvent))
-            //    .To(typeof(object));
-
-            // find all ICommoditySerializer(s)
-            //var allCommoditySerializers = AppDomain.CurrentDomain.GetAssemblies().FindTypesImplementingInterface(typeof(ICommoditySerializer<>));
-            //foreach (var commoditySerializerType in allCommoditySerializers)
-            //{
-            //    // Bind for kernel loading
-            //    var interfaces = commoditySerializerType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommoditySerializer<>)).ToArray();
-            //    _kernel.Bind(interfaces).To(commoditySerializerType);
-
-            //    //commoditySerializerResolver.AddSerializer(, 500);
-            //}
-
-            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommoditySerializer<IAggregateEvent>());
+            // Serializer for MongoDB (forward to CommodityBsonSerializer)
+            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommodityBsonSerializer<IAggregateEvent>());
         }
 
         public void Stop()
