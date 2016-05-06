@@ -5,7 +5,7 @@ namespace Commodity.Domain.Core
 {
     public interface ICommodityReader
     {
-        BsonType GetCurrentBsonType();
+        BsonType ReadBsonType();
         void ReadStartOfObject();
         void ReadEndOfObject();
         string ReadName();

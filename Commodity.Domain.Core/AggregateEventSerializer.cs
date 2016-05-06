@@ -1,31 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Commodity.Domain.Core;
 using Commodity.Interfaces;
 using MongoDB.Bson;
 
 namespace Commodity.Domain.Core
 {
-    //public class AggregateEventSerializer : CommodityBsonSerializer<IAggregateEvent>
-    //{
-    //    public override void Serialize(ICommodityWriter writer, IAggregateEvent o)
-    //    {
-    //        writer.WriteStartOfObject();
-    //        writer.WriteName("t");
-    //        writer.WriteString(o.GetType().FullName);
-    //        writer.WriteName("i");
-    //        CommodityBsonSerializer.Serialize(writer, o.GetType(), o);
-    //        writer.WriteEndOfObject();
-    //    }
-
-    //    public override IAggregateEvent Deserialize(ICommodityReader reader)
-    //    {
-
-
-    //        throw new NotImplementedException();
-    //    }
-    //}
-
     public class TypeSerializer : CommoditySerializer<Type>
     {
         private readonly ICommodityBsonTypeResolver _typeResolver;
@@ -45,7 +27,76 @@ namespace Commodity.Domain.Core
             string handle = _typeResolver.GetHandleFromType(o);
             writer.WriteString(handle);
         }
-        
+    }
+
+    public class StringSerializer : CommoditySerializer<String>
+    {
+        public override string Deserialize(ICommodityReader reader)
+        {
+            return reader.ReadString();
+        }
+
+        public override void Serialize(ICommodityWriter writer, string value)
+        {
+            writer.WriteString(value);
+        }
+    }
+
+    public abstract class CommodityMemberInfoSerializer
+    {
+        protected CommodityMemberInfoSerializer(MemberInfo memberInfo)
+        {
+            MemberInfo = memberInfo;
+        }
+        protected MemberInfo MemberInfo { get; private set; }
+
+        public string Name
+        {
+            get { return MemberInfo.Name; }
+        }
+
+        public abstract Type MemberType{get;}
+
+        public abstract object GetValue(object instance);
+        public abstract void SetValue(object instance, object value);
+    }
+
+    public class CommodityPropertyInfoSerializer : CommodityMemberInfoSerializer
+    {
+        public CommodityPropertyInfoSerializer(MemberInfo memberInfo) : base(memberInfo)
+        {
+        }
+
+        protected PropertyInfo PropertyInfo { get { return (PropertyInfo) MemberInfo; } }
+
+        public override object GetValue(object instance)
+        {
+            return PropertyInfo.GetValue(instance);
+        }
+
+        public override void SetValue(object instance, object value)
+        {
+            PropertyInfo.SetValue(instance, value);
+        }
+
+        public override Type MemberType
+        {
+            get { return PropertyInfo.PropertyType; }
+        }
+    }
+
+    public class ValueTypeSerializer : ICommoditySerializer
+    {
+        public void Serialize(ICommodityWriter writer, Type nominalType, object value)
+        {
+            // must be a struct serializer
+            throw new NotImplementedException();
+        }
+
+        public object Deserialize(ICommodityReader reader, Type nominalType)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class DefaultSerializer : ICommoditySerializer
@@ -70,9 +121,11 @@ namespace Commodity.Domain.Core
             writer.WriteEndOfObject();
         }
 
+        
+
         public object Deserialize(ICommodityReader reader, Type nominalType)
         {
-            BsonType bsonType = reader.GetCurrentBsonType();
+            BsonType bsonType = reader.ReadBsonType();
             switch (bsonType)
             {
                 case BsonType.Null:
@@ -82,44 +135,37 @@ namespace Commodity.Domain.Core
                     reader.ReadStartOfObject();
                     var typeName = reader.ReadName();
                     Type actualType = CommodityBsonSerializer.Deserialize<Type>(reader);
-                    var valueName = reader.ReadName();
+                    // Create type
+                    object instance = InstantiateType(actualType);
+                    var valueName = reader.ReadName(); // is always "v"
                     reader.ReadStartOfObject();
-                    DeserializeAttributes(reader, actualType);
+                    DeserializeAttributes(reader, actualType, instance);
                     reader.ReadEndOfObject();
                     reader.ReadEndOfObject();
+                    return instance;
                     break;
             }
+            throw new Exception("nothing to deserialize?");
             return null;
         }
 
-        internal class MemberInfoAndAction
+        private object InstantiateType(Type type)
         {
-            public MemberInfoAndAction(
-                MemberInfo memberInfo, 
-                Action<ICommodityWriter, MemberInfo, object> writeAction, 
-                Func<ICommodityReader, MemberInfo, object> readAction)
-            {
-                MemberInfo = memberInfo;
-                WriteAction = writeAction;
-                ReadAction = readAction;
-            }
-            public MemberInfo MemberInfo { get; private set; }
-            public Action<ICommodityWriter, MemberInfo, object> WriteAction { get; private set; }
-            public Func<ICommodityReader, MemberInfo, object> ReadAction { get; private set; }
+            return Activator.CreateInstance(type);
         }
 
-        private MemberInfoAndAction GetMemberSerializeAction(MemberInfo memberInfo)
+        private CommodityMemberInfoSerializer GetMemberSerializeAction(MemberInfo memberInfo)
         {
             if (memberInfo.MemberType == MemberTypes.Property)
             {
                 var propInfo = (PropertyInfo)memberInfo;
                 if(propInfo.CanRead && propInfo.CanWrite)
-                    return new MemberInfoAndAction(memberInfo, SerializeMemberAsProperty, DeserializeMemberAsProperty);
+                    return new CommodityPropertyInfoSerializer(memberInfo);
             }
             return null;
         }
 
-        private MemberInfoAndAction[] GetSerializableMemberInfos(Type nominalType)
+        private CommodityMemberInfoSerializer[] GetSerializableMemberInfos(Type nominalType)
         {
             return nominalType.GetMembers(BindingFlags.Public | BindingFlags.Instance)
                 .Select(GetMemberSerializeAction)
@@ -130,42 +176,52 @@ namespace Commodity.Domain.Core
         private void SerializeAttributes(ICommodityWriter writer, Type nominalType, object value)
         {
             var serializableMembers = GetSerializableMemberInfos(nominalType);
-            foreach (MemberInfoAndAction memberAndAction in serializableMembers)
+            foreach (CommodityMemberInfoSerializer memberInfoSerializer in serializableMembers)
             {
-                writer.WriteName(memberAndAction.MemberInfo.Name);
-                memberAndAction.WriteAction(writer, memberAndAction.MemberInfo, value);
+                object memberValue = memberInfoSerializer.GetValue(value);
+                writer.WriteName(memberInfoSerializer.Name);
+                CommodityBsonSerializer.Serialize(writer, memberInfoSerializer.MemberType, memberValue);
             }
         }
 
-        private void DeserializeAttributes(ICommodityReader reader, Type actualType)
+        private void DeserializeAttributes(ICommodityReader reader, Type actualType, object instance)
         {
             var serializableMembers = GetSerializableMemberInfos(actualType);
-            foreach (MemberInfoAndAction memberAndAction in serializableMembers)
+
+            //var bsonType = ;
+            // loop over reader
+            while (reader.ReadBsonType() != BsonType.EndOfDocument)
             {
                 string name = reader.ReadName();
-                object value = memberAndAction.ReadAction(reader, memberAndAction.MemberInfo);
-                //memberAndAction.Action(writer, memberAndAction.MemberInfo, value);
+                // find name in the serializableMembers
+                CommodityMemberInfoSerializer memberInfoSerializer = serializableMembers.FirstOrDefault(member => member.Name == name);
+                if (memberInfoSerializer == null)
+                    throw new Exception("Member not found.");
+
+                // read value (call into deserializer)
+                object value = CommodityBsonSerializer.Deserialize(reader, memberInfoSerializer.MemberType);
+                memberInfoSerializer.SetValue(instance, value);
             }
         }
-        private static readonly Action<ICommodityWriter, MemberInfo, object> SerializeMemberAsProperty = (writer, memberInfo, value) =>
-        {
-            var propertyInfo = (PropertyInfo)memberInfo;
-            var propertyValue = propertyInfo.GetValue(value);
-            if (propertyValue == null)
-                writer.WriteNull();
-            else
-                writer.WriteString(propertyValue.ToString());
-        };
+        //private static readonly Action<ICommodityWriter, MemberInfo, object> SerializeMemberAsProperty = (writer, memberInfo, value) =>
+        //{
+        //    var propertyInfo = (PropertyInfo)memberInfo;
+        //    var propertyValue = propertyInfo.GetValue(value);
+        //    if (propertyValue == null)
+        //        writer.WriteNull();
+        //    else
+        //        writer.WriteString(propertyValue.ToString());
+        //};
 
-        private static readonly Func<ICommodityReader, MemberInfo, object> DeserializeMemberAsProperty = (reader, memberInfo) =>
-        {
-            var bsonType = reader.GetCurrentBsonType();
-            if (bsonType == BsonType.Null)
-            {
-                reader.ReadNull();
-                return null;
-            }
-            return reader.ReadString();
-        };
+        //private static readonly Func<ICommodityReader, MemberInfo, object> DeserializeMemberAsProperty = (reader, memberInfo) =>
+        //{
+        //    var bsonType = reader.GetCurrentBsonType();
+        //    if (bsonType == BsonType.Null)
+        //    {
+        //        reader.ReadNull();
+        //        return null;
+        //    }
+        //    return reader.ReadString();
+        //};
     }
 }

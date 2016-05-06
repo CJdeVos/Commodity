@@ -56,6 +56,9 @@ namespace Commodity.Domain.Core
             // Commodity Serializers
             // 1) Type (priority 100)
             CommodityBsonSerializer.RegisterSerializer((f) => typeof(Type).IsAssignableFrom(f), new TypeSerializer(bsonTypeResolver), 100);
+            CommodityBsonSerializer.RegisterSerializer((f) => f == typeof(String), new StringSerializer(), 100);
+            CommodityBsonSerializer.RegisterSerializer((f) => f.IsValueType, new ValueTypeSerializer(), 100);
+
             // 2) * 
             CommodityBsonSerializer.RegisterSerializer((f)=>true, new DefaultSerializer());
             

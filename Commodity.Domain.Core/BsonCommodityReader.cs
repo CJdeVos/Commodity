@@ -28,10 +28,22 @@ namespace Commodity.Domain.Core
             _reader.ReadNull();
         }
 
-        public BsonType GetCurrentBsonType()
+        public BsonType ReadBsonType()
         {
-            return _reader.GetCurrentBsonType();
+            return _reader.ReadBsonType();
         }
+
+        //public BsonType GetCurrentBsonType()
+        //{
+        //    //ReadBsonType
+        //    var currentBsonType = _reader.CurrentBsonType;
+        //    var state = _reader.State;
+            
+        //    //if (currentBsonType == BsonType.EndOfDocument)
+        //    //    return BsonType.EndOfDocument;
+        //    var newCurrentBsonType = _reader.GetCurrentBsonType();
+        //    return newCurrentBsonType;
+        //}
 
         public void ReadStartOfObject()
         {

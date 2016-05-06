@@ -80,8 +80,15 @@ namespace Commodity.Domain.Core
         public static T Deserialize<T>(ICommodityReader reader)
         {
             var nominalType = typeof (T);
+            return (T) Deserialize(reader, typeof (T));
+            //ICommoditySerializer o = EnsureSerializer(nominalType);
+            //return (T)o.Deserialize(reader, nominalType);
+        }
+
+        public static object Deserialize(ICommodityReader reader, Type nominalType)
+        {
             ICommoditySerializer o = EnsureSerializer(nominalType);
-            return (T)o.Deserialize(reader, nominalType);
+            return o.Deserialize(reader, nominalType);
         }
     }
 
