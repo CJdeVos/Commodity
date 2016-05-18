@@ -3,11 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E0BEC5CD-4F73-432E-BF35-75DBBE6D3160}</ProjectGuid>
+    <ProjectGuid>{B1EB7E6D-DE81-45AA-800B-E90FDAE09D7F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Commodity.CommandHandlers.Test</RootNamespace>
-    <AssemblyName>Commodity.CommandHandlers.Test</AssemblyName>
+    <RootNamespace>Commodity.Domain.Core.Test</RootNamespace>
+    <AssemblyName>Commodity.Domain.Core.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -35,14 +35,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Rhino.Mocks, Version=3.6.0.0, Culture=neutral, PublicKeyToken=0b3305902db7183f, processorArchitecture=MSIL">
-      <HintPath>..\packages\RhinoMocks.3.6.1\lib\net\Rhino.Mocks.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Shouldly, Version=2.7.0.0, Culture=neutral, PublicKeyToken=6042cbcb05cbc941, processorArchitecture=MSIL">
-      <HintPath>..\packages\Shouldly.2.7.0\lib\net40\Shouldly.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -58,40 +50,14 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="AggregateEventAssertExtensions.cs" />
-    <Compile Include="AggregateRepositoryTest.cs" />
-    <Compile Include="Schemas\CreateSchemaCommandHandlerTests.cs" />
+    <Compile Include="Common\UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestEventStore.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Commodity.CommandHandlers\Commodity.CommandHandlers.csproj">
-      <Project>{a0222e3f-f0e0-41bb-b762-9b03af7ddeb6}</Project>
-      <Name>Commodity.CommandHandlers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Commodity.Commands\Commodity.Commands.csproj">
-      <Project>{5345cb32-6945-4617-bc2b-d79100e558cd}</Project>
-      <Name>Commodity.Commands</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Commodity.Domain.Core.Test\Commodity.Domain.Core.Test.csproj">
-      <Project>{b1eb7e6d-de81-45aa-800b-e90fdae09d7f}</Project>
-      <Name>Commodity.Domain.Core.Test</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Commodity.Domain.Core\Commodity.Domain.Core.csproj">
       <Project>{fd1dbc10-4b02-4999-adfa-0d36458fa4cb}</Project>
       <Name>Commodity.Domain.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Commodity.Domain\Commodity.Domain.csproj">
-      <Project>{1d0cc8a3-ab1f-4f0d-97fd-a80f072093ae}</Project>
-      <Name>Commodity.Domain</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Commodity.Interfaces\Commodity.Interfaces.csproj">
-      <Project>{7785c0f3-3dcb-4543-8162-4cc477c751cf}</Project>
-      <Name>Commodity.Interfaces</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

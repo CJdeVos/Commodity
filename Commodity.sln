@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commodity.CommandHandlers.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commodity.Serialization.Test", "Commodity.Serialization.Test\Commodity.Serialization.Test.csproj", "{497C93A0-23E9-4142-9444-010F3765344D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commodity.Domain.Core.Test", "Commodity.Domain.Core.Test\Commodity.Domain.Core.Test.csproj", "{B1EB7E6D-DE81-45AA-800B-E90FDAE09D7F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{497C93A0-23E9-4142-9444-010F3765344D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{497C93A0-23E9-4142-9444-010F3765344D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{497C93A0-23E9-4142-9444-010F3765344D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1EB7E6D-DE81-45AA-800B-E90FDAE09D7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1EB7E6D-DE81-45AA-800B-E90FDAE09D7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1EB7E6D-DE81-45AA-800B-E90FDAE09D7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1EB7E6D-DE81-45AA-800B-E90FDAE09D7F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

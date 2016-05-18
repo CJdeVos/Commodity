@@ -22,5 +22,10 @@ namespace Commodity.Domain.Core
         {
             return _enumerator;
         }
+
+        public static EventStream FromEnumerator(IEnumerator<IAggregateEvent> enumerator)
+        {
+            return new EventStream(enumerator);
+        }
     }
 }
