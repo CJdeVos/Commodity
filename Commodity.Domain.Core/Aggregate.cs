@@ -13,6 +13,12 @@ namespace Commodity.Domain.Core
         {
         }
 
+        private AggregateStateEnum _state = AggregateStateEnum.None;
+        internal void SetAggregateState(AggregateStateEnum state)
+        {
+            _state = state;
+        }
+
         private void ApplyTypedEvent(Type t)
         {
             var type = t.MakeGenericType(this.GetType());
@@ -23,13 +29,14 @@ namespace Commodity.Domain.Core
         protected Aggregate(Guid aggregateId)
         {
             AggregateId = aggregateId;
-            ApplyTypedEvent(typeof(Created<>));
+            //if(_state == AggregateStateEnum.None) // e.g. not replaying
+            //    ApplyTypedEvent(typeof(Created<>));
         }
 
-        public void Delete()
+        /*public void Delete()
         {
-            ApplyTypedEvent(typeof (Deleted<>));
-        }
+            //ApplyTypedEvent(typeof (Deleted<>));
+        }*/
 
         public Guid AggregateId { get; internal set; }
         public int CommittedVersion { get; internal set; }
@@ -39,8 +46,6 @@ namespace Commodity.Domain.Core
             var m = this.GetType().GetMethod("Handle", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.InvokeMethod, null, new[] { @event.GetType() }, null);
             if (m == null) throw new NotImplementedException(String.Format("Handle({0} @event) not implemented for type {1}.", @event.GetType().ToString(), this.GetType().ToString()));
             m.Invoke(this, new[] { @event });
-
-            //if (!IsPlayState())
             _uncommittedEvents.Add(@event);
         }
 

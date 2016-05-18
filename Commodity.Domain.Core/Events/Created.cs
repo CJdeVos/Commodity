@@ -1,8 +1,10 @@
 ﻿using Commodity.Interfaces;
+using Commodity.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace Commodity.Domain.Core.Events
 {
-    [CommodityBsonSerializable("Created")]
+    [CommoditySerializable("Created")]
     public class Created<TAggregate> : IAggregateEvent
         where TAggregate: Aggregate
     {

@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FD1DBC10-4B02-4999-ADFA-0D36458FA4CB}</ProjectGuid>
+    <ProjectGuid>{331E4695-6827-4632-95FF-D1753CF599D3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Commodity.Domain.Core</RootNamespace>
-    <AssemblyName>Commodity.Domain.Core</AssemblyName>
+    <RootNamespace>Commodity.Serialization</RootNamespace>
+    <AssemblyName>Commodity.Serialization</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -34,18 +34,6 @@
       <HintPath>..\packages\MongoDB.Bson.2.2.3\lib\net45\MongoDB.Bson.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="MongoDB.Driver, Version=2.2.3.3, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MongoDB.Driver.2.2.3\lib\net45\MongoDB.Driver.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="MongoDB.Driver.Core, Version=2.2.3.3, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MongoDB.Driver.Core.2.2.3\lib\net45\MongoDB.Driver.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
       <HintPath>..\packages\Ninject.3.2.0.0\lib\net45-full\Ninject.dll</HintPath>
       <Private>True</Private>
@@ -60,39 +48,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Aggregate.cs" />
-    <Compile Include="AggregateRepository.cs" />
-    <Compile Include="StartupAsServer.cs" />
-    <Compile Include="EventContext.cs" />
-    <Compile Include="EventPublisher.cs" />
-    <Compile Include="EventStream.cs" />
-    <Compile Include="EventStreamNameResolver.cs" />
-    <Compile Include="Events\Deleted.cs" />
-    <Compile Include="Events\Created.cs" />
-    <Compile Include="InMemoryEventStorage.cs" />
-    <Compile Include="EventStore.cs" />
-    <Compile Include="Interfaces\IAggregateRepository.cs" />
-    <Compile Include="Interfaces\IEventHandler.cs" />
-    <Compile Include="Interfaces\IEventStore.cs" />
-    <Compile Include="Interfaces\IEventStreamNameResolver.cs" />
+    <Compile Include="Serializers\DefaultSerializer.cs" />
+    <Compile Include="BsonCommodityReader.cs" />
+    <Compile Include="BsonCommodityWriter.cs" />
+    <Compile Include="CommoditySerializableAttribute.cs" />
+    <Compile Include="TypeResolver\CommodityTypeResolver.cs" />
+    <Compile Include="Serializers\CommodityMemberInfoSerializer.cs" />
+    <Compile Include="Serializers\CommodityPropertyInfoSerializer.cs" />
+    <Compile Include="CommoditySerializer.cs" />
+    <Compile Include="TypeResolver\ICommodityTypeResolver.cs" />
+    <Compile Include="ICommodityReader.cs" />
+    <Compile Include="ICommoditySerializer.cs" />
+    <Compile Include="ICommodityWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Startup.cs" />
+    <Compile Include="Serializers\StringSerializer.cs" />
+    <Compile Include="Serializers\TypeSerializer.cs" />
+    <Compile Include="Serializers\ValueTypeSerializer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Commodity.Common\Commodity.Common.csproj">
-      <Project>{7E697633-5DE9-4CB1-9296-B21612BA64E2}</Project>
+      <Project>{7e697633-5de9-4cb1-9296-b21612ba64e2}</Project>
       <Name>Commodity.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\Commodity.Interfaces\Commodity.Interfaces.csproj">
       <Project>{7785c0f3-3dcb-4543-8162-4cc477c751cf}</Project>
       <Name>Commodity.Interfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Commodity.Serialization\Commodity.Serialization.csproj">
-      <Project>{331e4695-6827-4632-95ff-d1753cf599d3}</Project>
-      <Name>Commodity.Serialization</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

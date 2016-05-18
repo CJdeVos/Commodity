@@ -87,6 +87,10 @@
       <Project>{375628ce-179e-46e8-ae12-405fddb8501f}</Project>
       <Name>Commodity.ProjectionBuilders</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Commodity.Serialization\Commodity.Serialization.csproj">
+      <Project>{331e4695-6827-4632-95ff-d1753cf599d3}</Project>
+      <Name>Commodity.Serialization</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -13,9 +13,13 @@ using Commodity.Domain.Schemas.Events;
 using Commodity.Interfaces;
 using Ninject;
 using Commodity.ProjectionBuilders;
+using Commodity.Serialization;
+using Commodity.Serialization.Serializers;
 
 namespace Commodity.Server
 {
+  
+
     class Program
     {
         static void Main(string[] args)
@@ -25,13 +29,15 @@ namespace Commodity.Server
             Commodity.CommandHandlers.Schemas.CreateSchemaCommandHandler ch = new CreateSchemaCommandHandler(null);
             SchemaNameAndCountOfProperties sncop = new SchemaNameAndCountOfProperties();
             SchemaRenamed schemaRn = new SchemaRenamed();
+            Commodity.Serialization.Serializers.StringSerializer r = new StringSerializer();
 
 
 
             // kernel for binding
             var kernel = new StandardKernel();
             kernel.BindStartUp<IStartUpAsServer>();
-            foreach (var server in kernel.GetAll<IStartUpAsServer>())
+            var allServers = kernel.GetAll<IStartUpAsServer>();
+            foreach (var server in allServers)
             {
                 server.Start();
             }

@@ -1,8 +1,9 @@
 ﻿using System;
+using Commodity.Domain.Core;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 
-namespace Commodity.Domain.Core
+namespace Commodity.Serialization
 {
     public class BsonCommodityReader : ICommodityReader
     {

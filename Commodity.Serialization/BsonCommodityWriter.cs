@@ -1,7 +1,8 @@
 ﻿using System;
+using Commodity.Domain.Core;
 using MongoDB.Bson.IO;
 
-namespace Commodity.Domain.Core
+namespace Commodity.Serialization
 {
     public class BsonCommodityWriter : ICommodityWriter
     {
@@ -49,7 +50,7 @@ namespace Commodity.Domain.Core
 
         public ICommodityWriter WriteResolved(Type nominalType, object value)
         {
-            CommodityBsonSerializer.Serialize(this, nominalType, value);
+            CommoditySerializer.Serialize(this, nominalType, value);
             return this;
         }
     }

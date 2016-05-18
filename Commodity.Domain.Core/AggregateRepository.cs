@@ -6,6 +6,12 @@ using Commodity.Interfaces;
 
 namespace Commodity.Domain.Core
 {
+    public enum AggregateStateEnum : byte
+    {
+        None = 0,
+        ReplayingEvents = 0
+ }
+
     public class AggregateRepository : IAggregateRepository
     {
         private readonly IEventStore _eventStore;
@@ -22,22 +28,31 @@ namespace Commodity.Domain.Core
         public async Task<TAggregate> Load<TAggregate>(Guid aggregateId, int version) where TAggregate : Aggregate
         {
             string streamName = _eventStreamNameResolver.Resolve<TAggregate>(aggregateId);
-            TAggregate aggregate = ConstructAggregate<TAggregate>(aggregateId);
+            
 
             // load snapshot
 
             // load stream and apply events
             var eventStream = await _eventStore.GetEventStream(streamName, 0, version);
-            foreach (var @event in eventStream){
-                aggregate.ApplyEvent(@event);
+            if (eventStream!=null)
+            {
+                TAggregate aggregate = ConstructAggregate<TAggregate>(aggregateId);
+                aggregate.SetAggregateState(AggregateStateEnum.ReplayingEvents);
+                
+                foreach (var @event in eventStream)
+                {
+                    aggregate.ApplyEvent(@event);
+                }
+                aggregate.Commit();
+                aggregate.SetAggregateState(AggregateStateEnum.None);
+                return aggregate;
             }
-            aggregate.Commit();
 
             // return aggregate
-            return aggregate;
+            return null;
         }
 
-        public void Save<TAggregate>(TAggregate aggregate) where TAggregate : Aggregate
+        public async Task Save<TAggregate>(TAggregate aggregate) where TAggregate : Aggregate
         {
             if (aggregate == null)
                 throw new ArgumentNullException("aggregate");
@@ -45,12 +60,24 @@ namespace Commodity.Domain.Core
             // test for uncommitted save unsaved changes
             var uncommittedEvents = aggregate.GetUncommittedEvents().ToArray();
             if (uncommittedEvents.Any() == false)
-                return;
+                return; // Task.FromResult(0);
 
             string streamName = _eventStreamNameResolver.Resolve<TAggregate>(aggregate.AggregateId);
 
-            // append events to stream
-            _eventStore.AppendToEventStream(streamName, aggregate.CommittedVersion, uncommittedEvents);
+            //// append events to stream
+            //var task = _eventStore.AppendToEventStream(streamName, aggregate.CommittedVersion, uncommittedEvents);
+            //return task.ContinueWith((t) => {
+            //    _eventPublisher.Publish(aggregate.AggregateId, uncommittedEvents);
+
+            //    // commit aggregate (e.g. reset)
+            //    aggregate.Commit();
+
+            //    //return Task.FromResult(0);
+            //});
+            //// publish events
+
+            
+            await _eventStore.AppendToEventStream(streamName, aggregate.CommittedVersion, uncommittedEvents);
 
             // publish events
             _eventPublisher.Publish(aggregate.AggregateId, uncommittedEvents);

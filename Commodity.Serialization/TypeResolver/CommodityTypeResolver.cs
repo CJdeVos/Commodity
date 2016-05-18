@@ -1,26 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Commodity.Domain.Core
+namespace Commodity.Serialization.TypeResolver
 {
-    public class CommodityBsonSerializableAttribute : Attribute
-    {
-        public CommodityBsonSerializableAttribute(string uniqueId)
-        {
-            UniqueId = uniqueId;
-        }
-
-        public string UniqueId { get; private set; }
-    }
-
-    public interface ICommodityBsonTypeResolver
-    {
-        Type GetTypeFromHandle(string handle);
-        string GetHandleFromType(Type type);
-    }
-
-    public sealed class CommodityBsonTypeResolver : ICommodityBsonTypeResolver
+    public sealed class CommodityTypeResolver : ICommodityTypeResolver
     {
         private readonly Dictionary<RuntimeTypeHandle, string> _typeToId = new Dictionary<RuntimeTypeHandle, string>();
         private readonly Dictionary<string, RuntimeTypeHandle> _idToType = new Dictionary<string, RuntimeTypeHandle>();
@@ -46,7 +30,7 @@ namespace Commodity.Domain.Core
 
             RuntimeTypeHandle handle = actualType.TypeHandle;
             if (!_typeToId.ContainsKey(handle))
-                throw new Exception(String.Format("Type <{0}> is not registered as a CommodityBsonSerializable.", actualType.ToString()));
+                throw new Exception(String.Format("Type <{0}> is not registered as a CommoditySerializable.", actualType.ToString()));
             string handleForActualType = _typeToId[handle];
 
             if (type.IsGenericType) // genericType<argumentTypes,...>
@@ -104,24 +88,8 @@ namespace Commodity.Domain.Core
             }
 
             if (!_idToType.ContainsKey(handle))
-                throw new Exception("Handle is not registered as a CommodityBsonSerializable.");
+                throw new Exception("Handle is not registered as a CommoditySerializable.");
             return Type.GetTypeFromHandle(_idToType[handle]);
         }
     }
-
-    public interface ICommodityBsonMap
-    {
-        void Map(ICommodityBsonMapper mapper);
-    }
-
-    public interface ICommodityBsonMapper
-    {
-
-    }
-
-    public class DefaultCommodityBsonMapping : ICommodityBsonMapper
-    {
-        
-    }
-
 }

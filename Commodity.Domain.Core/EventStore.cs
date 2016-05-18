@@ -4,19 +4,21 @@ using System.Linq;
 using Commodity.Domain.Core.Interfaces;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using MongoDB.Bson;
 using Ninject;
 using MongoDB.Driver;
 using System.Threading.Tasks;
+using Commodity.Serialization;
 using MongoDB.Bson.Serialization;
 
 namespace Commodity.Domain.Core
 {
     internal static class EventStoreExtensions
     {
-        internal static async Task<BsonDocument> FindStream(this IMongoCollection<BsonDocument> collection, string streamName)
+        internal static Task<BsonDocument> FindStream(this IMongoCollection<BsonDocument> collection, string streamName)
         {
-            return await collection.Find(doc => doc["_id"] == streamName).SingleOrDefaultAsync();
+            return collection.Find(doc => doc["_id"] == streamName).SingleOrDefaultAsync();
         }
     }
 
@@ -33,6 +35,8 @@ namespace Commodity.Domain.Core
             // currently we always have just one page
             var collection = _database.GetCollection<BsonDocument>("events");
             BsonDocument streamDocument = await collection.FindStream(streamName);
+            if (streamDocument==null)
+                return null;
             
             // streamdocument currently contains all events within 1 document
             return new EventStream(CreateEnumerator(streamDocument["Events"].AsBsonArray));
@@ -46,13 +50,8 @@ namespace Commodity.Domain.Core
             }
         }
 
-        public async void AppendToEventStream(string streamName, int expectedVersion, IEnumerable<IAggregateEvent> events)
+        public async Task AppendToEventStream(string streamName, int expectedVersion, IEnumerable<IAggregateEvent> events)
         {
-
-            var x = events.Select(@event => @event.ToBsonDocument()).ToList();
-            var y = x.Select(f => BsonSerializer.Deserialize<IAggregateEvent>(f)).ToList();
-            
-            //BsonSerializer.Deserialize()
             var collection = _database.GetCollection<BsonDocument>("events");
 
             BsonDocument streamDocument = await collection.FindStream(streamName);
@@ -64,11 +63,20 @@ namespace Commodity.Domain.Core
             else
             {
                 var version = streamDocument["committedVersion"].AsInt32;
-                if (version != expectedVersion) 
-                    throw new Exception(String.Format("Stream found, but version is different. Current version is {0}, expected is {1}.", version, expectedVersion));
+                if (version != expectedVersion)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendFormat("Stream found, but version is different. Current version is {0}, expected is {1}.",
+                        version, expectedVersion);
+                    if (expectedVersion == 0)
+                    {
+                        sb.Append("Possibly you attempt to overwrite an existing stream.");
+                    }
+                    throw new Exception(sb.ToString());
+                }
             }
             
-            var eventsAsBsonDocuments = events.Select(@event => @event.ToBsonDocument()).ToList();
+            var eventsAsBsonDocuments = events.Select(CommoditySerializer.Serialize).ToList();
 
             // Update the document
             UpdateResult res = await collection.UpdateOneAsync(
@@ -96,12 +104,8 @@ namespace Commodity.Domain.Core
 
         private IAggregateEvent ConstructEvent(BsonValue bsonValue)
         {
-            return BsonSerializer.Deserialize<IAggregateEvent>(bsonValue.AsBsonDocument);
+            return CommoditySerializer.Deserialize<IAggregateEvent>(bsonValue.AsBsonDocument);
         }
-
-        public string[] GetEventNamesUsedInStore()
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

@@ -1,8 +1,10 @@
-﻿namespace Commodity.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace Commodity.Interfaces
 {
     public interface ICommandHandler<TCommand>
         where TCommand: ICommand
     {
-        void Handle(TCommand command);
+        Task Handle(TCommand command);
     }
 }

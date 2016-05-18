@@ -1,13 +1,6 @@
 ﻿using Commodity.Interfaces;
 using Ninject;
-using System;
-using System.Collections.Generic;
-using Commodity.Common;
-using System.Linq;
-using System.Reflection;
-using Commodity.Domain.Core.Events;
 using Commodity.Domain.Core.Interfaces;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace Commodity.Domain.Core
@@ -33,38 +26,6 @@ namespace Commodity.Domain.Core
             // Mongo
             _kernel.Bind<MongoClient>().ToSelf().WithConstructorArgument("connectionString", "mongodb://localhost:27017");
             _kernel.Bind<IMongoDatabase>().ToMethod(ctx => ctx.Kernel.Get<MongoClient>().GetDatabase("events")).Named("Events");
-
-            // Find all event handlers and bind to self.
-            var allEventHandlers = AppDomain.CurrentDomain.GetAssemblies().FindTypesImplementingInterface(typeof(IEventHandler<>));
-            foreach (var eventHandlerType in allEventHandlers)
-            {
-                var interfaces = eventHandlerType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof (IEventHandler<>)).ToArray();
-                _kernel.Bind(interfaces).To(eventHandlerType);
-            }
-
-
-            CommodityBsonTypeResolver bsonTypeResolver = new CommodityBsonTypeResolver();
-
-            // Find all Types with attribute CommodityBsonSerializable
-            var allTypesWithSerializableAttribute = AppDomain.CurrentDomain.GetAssemblies().FindTypesWithAttribute<CommodityBsonSerializableAttribute>();
-            foreach (var type in allTypesWithSerializableAttribute)
-            {
-                CommodityBsonSerializableAttribute attr = type.GetCustomAttribute<CommodityBsonSerializableAttribute>();
-                bsonTypeResolver.Register(type, attr.UniqueId);
-            }
-
-            // Commodity Serializers
-            // 1) Type (priority 100)
-            CommodityBsonSerializer.RegisterSerializer((f) => typeof(Type).IsAssignableFrom(f), new TypeSerializer(bsonTypeResolver), 100);
-            CommodityBsonSerializer.RegisterSerializer((f) => f == typeof(String), new StringSerializer(), 100);
-            CommodityBsonSerializer.RegisterSerializer((f) => f.IsValueType, new ValueTypeSerializer(), 100);
-
-            // 2) * 
-            CommodityBsonSerializer.RegisterSerializer((f)=>true, new DefaultSerializer());
-            
-
-            // Serializer for MongoDB (forward to CommodityBsonSerializer)
-            BsonSerializer.RegisterSerializer(typeof(IAggregateEvent), new ForwardToCommodityBsonSerializer<IAggregateEvent>());
         }
 
         public void Stop()

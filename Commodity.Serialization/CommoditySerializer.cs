@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using Commodity.Domain.Core;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
 
-namespace Commodity.Domain.Core
+namespace Commodity.Serialization
 {
-    public static class CommodityBsonSerializer
+    public static class CommoditySerializer
     {
         private class DescendingSerializerComparer<T> : IComparer<T>
         {
@@ -26,13 +30,13 @@ namespace Commodity.Domain.Core
 
         private readonly static SortedList<uint, SerializerInfo> Serializers = new SortedList<uint, SerializerInfo>(new DescendingSerializerComparer<uint>());
 
-        public static void RegisterSerializer(Type serializerForType, ICommoditySerializer serializer, uint priority = 1)
+        internal static void RegisterSerializer(Type serializerForType, ICommoditySerializer serializer, uint priority = 1)
         {
             Func<Type, bool> fnApplies = (t) => t == serializerForType;
             RegisterSerializer(fnApplies, serializer, priority);
         }
 
-        public static void RegisterSerializer(Func<Type, bool> fnApplies, ICommoditySerializer serializer, uint priority = 1)
+        internal static void RegisterSerializer(Func<Type, bool> fnApplies, ICommoditySerializer serializer, uint priority = 1)
         {
             Serializers.Add(priority, new SerializerInfo()
             {
@@ -42,7 +46,7 @@ namespace Commodity.Domain.Core
         }
 
         private static readonly Dictionary<RuntimeTypeHandle, ICommoditySerializer> ResolvedTypeSerializers = new Dictionary<RuntimeTypeHandle, ICommoditySerializer>();
-        public static ICommoditySerializer Resolve(Type t)
+        internal static ICommoditySerializer Resolve(Type t)
         {
             // check resolved types first
             if (ResolvedTypeSerializers.ContainsKey(t.TypeHandle))
@@ -61,23 +65,23 @@ namespace Commodity.Domain.Core
             ICommoditySerializer o = Resolve(nominalType);
             if (o == null)
             {
-                throw new NotImplementedException(String.Format("No CommodityBsonSerializer found for object of type {0}", nominalType.FullName));
+                throw new NotImplementedException(String.Format("No CommoditySerializer found for object of type {0}", nominalType.FullName));
             }
             return o;
         }
 
-        public static void Serialize(ICommodityWriter writer, Type nominalType, object value)
+        internal static void Serialize(ICommodityWriter writer, Type nominalType, object value)
         {
             ICommoditySerializer o = EnsureSerializer(nominalType);
             o.Serialize(writer, nominalType, value);
         }
 
-        public static void Serialize<T>(ICommodityWriter writer, T value)
+        internal static void Serialize<T>(ICommodityWriter writer, T value)
         {
             Serialize(writer, typeof(T), value);
         }
 
-        public static T Deserialize<T>(ICommodityReader reader)
+        internal static T Deserialize<T>(ICommodityReader reader)
         {
             var nominalType = typeof (T);
             return (T) Deserialize(reader, typeof (T));
@@ -85,32 +89,36 @@ namespace Commodity.Domain.Core
             //return (T)o.Deserialize(reader, nominalType);
         }
 
-        public static object Deserialize(ICommodityReader reader, Type nominalType)
+        internal static object Deserialize(ICommodityReader reader, Type nominalType)
         {
             ICommoditySerializer o = EnsureSerializer(nominalType);
             return o.Deserialize(reader, nominalType);
         }
-    }
 
-    public interface ICommoditySerializer 
-    {
-        void Serialize(ICommodityWriter writer, Type nominalType, object value);
-        object Deserialize(ICommodityReader reader, Type nominalType);
-    }
+        //public static object Deserialize(BsonDocument document)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-    public abstract class CommoditySerializer<T> : ICommoditySerializer
-    {
-        public abstract void Serialize(ICommodityWriter writer, T o);
-        public abstract T Deserialize(ICommodityReader reader);
-
-        void ICommoditySerializer.Serialize(ICommodityWriter writer, Type nominalType, object o)
+        public static T Deserialize<T>(BsonDocument document)
         {
-            this.Serialize(writer, (T)o);
+            BsonDocumentReader reader = new BsonDocumentReader(document, new BsonDocumentReaderSettings() { GuidRepresentation = GuidRepresentation.Standard });
+            ICommodityReader commodityReader = new BsonCommodityReader(reader);
+            return CommoditySerializer.Deserialize<T>(commodityReader);
         }
 
-        object ICommoditySerializer.Deserialize(ICommodityReader reader, Type nominalType)
+        //public static BsonDocument Serialize(object instance)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        public static BsonDocument Serialize<T>(T instance)
         {
-            return Deserialize(reader);
+            BsonDocument doc = new BsonDocument();
+            BsonDocumentWriter writer = new BsonDocumentWriter(doc, new BsonDocumentWriterSettings() { GuidRepresentation = GuidRepresentation.Standard });
+            ICommodityWriter commodityWriter = new BsonCommodityWriter(writer);
+            CommoditySerializer.Serialize(commodityWriter, instance);
+            return doc;
         }
     }
 }

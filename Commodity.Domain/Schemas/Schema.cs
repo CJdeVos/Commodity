@@ -3,23 +3,21 @@ using System.Collections.Generic;
 using Commodity.Domain.Core;
 using Commodity.Domain.Schemas.Events;
 using Commodity.Domain.Core.Events;
+using Commodity.Serialization;
 
 namespace Commodity.Domain.Schemas
 {
-    [CommodityBsonSerializable("Schema")]
+    [CommoditySerializable("Schema")]
     public class Schema : Aggregate
     {
-        public Schema() { }
+        public Schema() { } // recommended -> but doesn't throw CREATED event
         public Schema(Guid schemaId) : base(schemaId)
         {
         }
 
         public string Name { get; private set; }
-        private readonly List<string> _properties = new List<string>();
-        public IReadOnlyList<string> Properties
-        {
-            get { return _properties.AsReadOnly(); }
-        }
+        public readonly List<string> Properties = new List<string>();
+        //public IReadOnlyList<string> Properties => _properties.AsReadOnly();
 
         public void AddProperty(string propertyName)
         {
@@ -34,8 +32,11 @@ namespace Commodity.Domain.Schemas
             ApplyEvent(new SchemaPropertyDeleted() { PropertyName = schemaName });
         }
 
-        private void Handle(Created<Schema> @event)
+        public void Rename(string name)
         {
+            ApplyEvent(new SchemaRenamed(){
+                SchemaName = name
+            });
         }
 
         private void Handle(SchemaRenamed @event)
@@ -45,12 +46,12 @@ namespace Commodity.Domain.Schemas
 
         private void Handle(SchemaPropertyCreated @event)
         {
-            _properties.Add(@event.PropertyName);
+            Properties.Add(@event.PropertyName);
         }
 
         private void Handle(SchemaPropertyDeleted @event)
         {
-            _properties.Remove(@event.PropertyName);
+            Properties.Remove(@event.PropertyName);
         }
 
     }
